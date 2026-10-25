@@ -117,7 +117,7 @@ const ok = (m) => console.log(`ok ${++n} - ${m}`);
   assert.ok(o.written.seq !== null && o.written.inserted > 500);
   const got = dump(vault);
   for (const t of syncTables) {
-    const want = Object.fromEntries(table(t).map((r) => [key(t, r), r]));
+    const want = Object.fromEntries((t === 'tm_employee' ? [] : table(t)).map((r) => [key(t, r), r])); // Employee is not a Tally object type: never requested
     assert.deepEqual(Object.keys(got[t]).sort(), Object.keys(want).sort(), `${t} keys`);
     for (const k of Object.keys(want)) assert.deepEqual(got[t][k], want[k], `${t} row ${k}`);
   }
