@@ -1,0 +1,35 @@
+[
+ {
+  "guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "name": "Demo Traders Pvt Ltd",
+  "basic_formal_name": "Demo Traders Pvt Ltd",
+  "starting_from": "2026-04-01",
+  "books_from": "2026-04-01",
+  "ending_at": "2027-03-31",
+  "last_voucher_date": "2026-09-30",
+  "alter_id_master": 115,
+  "alter_id_voucher": 105,
+  "state_name": "Maharashtra",
+  "country": "India",
+  "pincode": "400001",
+  "address": [
+   "1 Trade Centre",
+   "Fort",
+   "Mumbai"
+  ],
+  "email": "info@demotraders.example.invalid",
+  "phone": "02240000000",
+  "mobile": "9820000000",
+  "website": "",
+  "gstin": "27AAACD1234E1Z5",
+  "gst_registration_type": "Regular",
+  "gst_applicable_date": "2017-07-01",
+  "pan": "AAACD1234E",
+  "tan": "",
+  "cin": "",
+  "base_currency_symbol": "INR",
+  "decimal_places": 2,
+  "tally_serial": "700012345",
+  "alter_id": 115
+ }
+]

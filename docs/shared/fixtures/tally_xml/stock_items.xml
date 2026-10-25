@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ENVELOPE>
+  <HEADER>
+    <VERSION>1</VERSION>
+    <STATUS>1</STATUS>
+  </HEADER>
+  <BODY>
+    <DATA>
+      <COLLECTION>
+        <STOCKITEM NAME="Widget A">
+          <GUID>1247b981-fb00-5f75-acd8-0acea03f7a2a-00000022</GUID>
+          <PARENT>Hardware</PARENT>
+          <BASEUNITS>Nos</BASEUNITS>
+          <OPENINGVALUE>5000.00</OPENINGVALUE>
+          <CLOSINGVALUE>9660.32</CLOSINGVALUE>
+          <LASTSALEDATE>20260925</LASTSALEDATE>
+          <GSTAPPLICABLE>Applicable</GSTAPPLICABLE>
+          <GSTTYPEOFSUPPLY>Goods</GSTTYPEOFSUPPLY>
+          <HSNDETAILS.LIST>
+            <HSNCODE>8479</HSNCODE>
+          </HSNDETAILS.LIST>
+          <COSTINGMETHOD>Avg. Cost</COSTINGMETHOD>
+          <VALUATIONMETHOD>Avg. Cost</VALUATIONMETHOD>
+          <ALTERID>33</ALTERID>
+          <OPENINGBALANCE>100 Nos</OPENINGBALANCE>
+          <CLOSINGBALANCE>185 Nos</CLOSINGBALANCE>
+          <LANGUAGENAME.LIST>
+            <NAME.LIST TYPE="String">
+              <NAME>Widget A</NAME>
+            </NAME.LIST>
+          </LANGUAGENAME.LIST>
+          <GSTDETAILS.LIST>
+            <APPLICABLEFROM>20170701</APPLICABLEFROM>
+            <TAXABILITY>Taxable</TAXABILITY>
+            <HSNCODE>8479</HSNCODE>
+            <STATEWISEDETAILS.LIST>
+              <STATENAME>Any</STATENAME>
+              <RATEDETAILS.LIST>
+                <GSTRATEDUTYHEAD>Central Tax</GSTRATEDUTYHEAD>
+                <GSTRATE>9.00</GSTRATE>
+              </RATEDETAILS.LIST>
+              <RATEDETAILS.LIST>
+                <GSTRATEDUTYHEAD>State Tax</GSTRATEDUTYHEAD>
+                <GSTRATE>9.00</GSTRATE>
+              </RATEDETAILS.LIST>
+              <RATEDETAILS.LIST>
+                <GSTRATEDUTYHEAD>Integrated Tax</GSTRATEDUTYHEAD>
+                <GSTRATE>18.00</GSTRATE>
+              </RATEDETAILS.LIST>
+              <RATEDETAILS.LIST>
+                <GSTRATEDUTYHEAD>Cess</GSTRATEDUTYHEAD>
+                <GSTRATE>0.00</GSTRATE>
+              </RATEDETAILS.LIST>
+            </STATEWISEDETAILS.LIST>
+          </GSTDETAILS.LIST>
+          <BATCHALLOCATIONS.LIST>
+            <GODOWNNAME>Main Location</GODOWNNAME>
+            <BATCHNAME>Primary Batch</BATCHNAME>
+            <OPENINGVALUE>5000.00</OPENINGVALUE>
+            <OPENINGBALANCE>100 Nos</OPENINGBALANCE>
+          </BATCHALLOCATIONS.LIST>
+        </STOCKITEM>
+        <STOCKITEM NAME="Widget B">
+          <GUID>eeb88362-d3bd-5080-86b2-855c920840ad-00000023</GUID>
+          <PARENT>Hardware</PARENT>
+          <BASEUNITS>Nos</BASEUNITS>
+          <OPENINGVALUE>4800.00</OPENINGVALUE>
+          <CLOSINGVALUE>9131.35</CLOSINGVALUE>
+          <LASTSALEDATE>20260925</LASTSALEDATE>
+          <GSTAPPLICABLE>Applicable</GSTAPPLICABLE>
+          <GSTTYPEOFSUPPLY>Goods</GSTTYPEOFSUPPLY>
+          <HSNDETAILS.LIST>
+            <HSNCODE>8480</HSNCODE>
+          </HSNDETAILS.LIST>
+          <COSTINGMETHOD>Avg. Cost</COSTINGMETHOD>
+          <VALUATIONMETHOD>Avg. Cost</VALUATIONMETHOD>
+          <ALTERID>34</ALTERID>
+          <OPENINGBALANCE>40 Nos</OPENINGBALANCE>
+          <CLOSINGBALANCE>80 Nos</CLOSINGBALANCE>
+          <LANGUAGENAME.LIST>
+            <NAME.LIST TYPE="String">
+              <NAME>Widget B</NAME>
+            </NAME.LIST>
+          </LANGUAGENAME.LIST>
+          <GSTDETAILS.LIST>
+            <APPLICABLEFROM>20170701</APPLICABLEFROM>
+            <TAXABILITY>Taxable</TAXABILITY>
+            <HSNCODE>8480</HSNCODE>
+            <STATEWISEDETAILS.LIST>
+              <STATENAME>Any</STATENAME>
+              <RATEDETAILS.LIST>
+                <GSTRATEDUTYHEAD>Central Tax</GSTRATEDUTYHEAD>
+                <GSTRATE>6.00</GSTRATE>
+              </RATEDETAILS.LIST>
+              <RATEDETAILS.LIST>
+                <GSTRATEDUTYHEAD>State Tax</GSTRATEDUTYHEAD>
+                <GSTRATE>6.00</GSTRATE>
+              </RATEDETAILS.LIST>
+              <RATEDETAILS.LIST>
+                <GSTRATEDUTYHEAD>Integrated Tax</GSTRATEDUTYHEAD>
+                <GSTRATE>12.00</GSTRATE>
+              </RATEDETAILS.LIST>
+              <RATEDETAILS.LIST>
+                <GSTRATEDUTYHEAD>Cess</GSTRATEDUTYHEAD>
+                <GSTRATE>0.00</GSTRATE>
+              </RATEDETAILS.LIST>
+            </STATEWISEDETAILS.LIST>
+          </GSTDETAILS.LIST>
+          <BATCHALLOCATIONS.LIST>
+            <GODOWNNAME>Main Location</GODOWNNAME>
+            <BATCHNAME>Primary Batch</BATCHNAME>
+            <OPENINGVALUE>4800.00</OPENINGVALUE>
+            <OPENINGBALANCE>40 Nos</OPENINGBALANCE>
+          </BATCHALLOCATIONS.LIST>
+        </STOCKITEM>
+        <STOCKITEM NAME="Gadget C">
+          <GUID>1955738e-d4c9-5894-a03a-5d1d1f2473b6-00000024</GUID>
+          <PARENT>Hardware</PARENT>
+          <BASEUNITS>Nos</BASEUNITS>
+          <CLOSINGVALUE>9316.00</CLOSINGVALUE>
+          <LASTSALEDATE>20260828</LASTSALEDATE>
+          <GSTAPPLICABLE>Applicable</GSTAPPLICABLE>
+          <GSTTYPEOFSUPPLY>Goods</GSTTYPEOFSUPPLY>
+          <HSNDETAILS.LIST>
+            <HSNCODE>8543</HSNCODE>
+          </HSNDETAILS.LIST>
+          <COSTINGMETHOD>Avg. Cost</COSTINGMETHOD>
+          <VALUATIONMETHOD>Avg. Cost</VALUATIONMETHOD>
+          <ALTERID>35</ALTERID>
+          <CLOSINGBALANCE>60 Nos</CLOSINGBALANCE>
+          <LANGUAGENAME.LIST>
+            <NAME.LIST TYPE="String">
+              <NAME>Gadget C</NAME>
+            </NAME.LIST>
+          </LANGUAGENAME.LIST>
+          <GSTDETAILS.LIST>
+            <APPLICABLEFROM>20170701</APPLICABLEFROM>
+            <TAXABILITY>Taxable</TAXABILITY>
+            <HSNCODE>8543</HSNCODE>
+            <STATEWISEDETAILS.LIST>
+              <STATENAME>Any</STATENAME>
+              <RATEDETAILS.LIST>
+                <GSTRATEDUTYHEAD>Central Tax</GSTRATEDUTYHEAD>
+                <GSTRATE>9.00</GSTRATE>
+              </RATEDETAILS.LIST>
+              <RATEDETAILS.LIST>
+                <GSTRATEDUTYHEAD>State Tax</GSTRATEDUTYHEAD>
+                <GSTRATE>9.00</GSTRATE>
+              </RATEDETAILS.LIST>
+              <RATEDETAILS.LIST>
+                <GSTRATEDUTYHEAD>Integrated Tax</GSTRATEDUTYHEAD>
+                <GSTRATE>18.00</GSTRATE>
+              </RATEDETAILS.LIST>
+              <RATEDETAILS.LIST>
+                <GSTRATEDUTYHEAD>Cess</GSTRATEDUTYHEAD>
+                <GSTRATE>0.00</GSTRATE>
+              </RATEDETAILS.LIST>
+            </STATEWISEDETAILS.LIST>
+          </GSTDETAILS.LIST>
+        </STOCKITEM>
+        <STOCKITEM NAME="Part D">
+          <GUID>cc9a7129-7a8c-5cd0-863b-98de5fce151e-00000025</GUID>
+          <PARENT>Hardware</PARENT>
+          <BASEUNITS>Kgs</BASEUNITS>
+          <OPENINGVALUE>2000.00</OPENINGVALUE>
+          <CLOSINGVALUE>6110.00</CLOSINGVALUE>
+          <LASTSALEDATE>20260720</LASTSALEDATE>
+          <GSTAPPLICABLE>Applicable</GSTAPPLICABLE>
+          <GSTTYPEOFSUPPLY>Goods</GSTTYPEOFSUPPLY>
+          <HSNDETAILS.LIST>
+            <HSNCODE>7318</HSNCODE>
+          </HSNDETAILS.LIST>
+          <COSTINGMETHOD>Avg. Cost</COSTINGMETHOD>
+          <VALUATIONMETHOD>Avg. Cost</VALUATIONMETHOD>
+          <ALTERID>36</ALTERID>
+          <OPENINGBALANCE>200 Kgs</OPENINGBALANCE>
+          <CLOSINGBALANCE>550 Kgs</CLOSINGBALANCE>
+          <LANGUAGENAME.LIST>
+            <NAME.LIST TYPE="String">
+              <NAME>Part D</NAME>
+            </NAME.LIST>
+          </LANGUAGENAME.LIST>
+          <GSTDETAILS.LIST>
+            <APPLICABLEFROM>20170701</APPLICABLEFROM>
+            <TAXABILITY>Taxable</TAXABILITY>
+            <HSNCODE>7318</HSNCODE>
+            <STATEWISEDETAILS.LIST>
+              <STATENAME>Any</STATENAME>
+              <RATEDETAILS.LIST>
+                <GSTRATEDUTYHEAD>Central Tax</GSTRATEDUTYHEAD>
+                <GSTRATE>2.50</GSTRATE>
+              </RATEDETAILS.LIST>
+              <RATEDETAILS.LIST>
+                <GSTRATEDUTYHEAD>State Tax</GSTRATEDUTYHEAD>
+                <GSTRATE>2.50</GSTRATE>
+              </RATEDETAILS.LIST>
+              <RATEDETAILS.LIST>
+                <GSTRATEDUTYHEAD>Integrated Tax</GSTRATEDUTYHEAD>
+                <GSTRATE>5.00</GSTRATE>
+              </RATEDETAILS.LIST>
+              <RATEDETAILS.LIST>
+                <GSTRATEDUTYHEAD>Cess</GSTRATEDUTYHEAD>
+                <GSTRATE>0.00</GSTRATE>
+              </RATEDETAILS.LIST>
+            </STATEWISEDETAILS.LIST>
+          </GSTDETAILS.LIST>
+          <BATCHALLOCATIONS.LIST>
+            <GODOWNNAME>Warehouse 2</GODOWNNAME>
+            <BATCHNAME>Primary Batch</BATCHNAME>
+            <OPENINGVALUE>2000.00</OPENINGVALUE>
+            <OPENINGBALANCE>200 Kgs</OPENINGBALANCE>
+          </BATCHALLOCATIONS.LIST>
+        </STOCKITEM>
+        <STOCKITEM NAME="Tonic Syrup">
+          <GUID>c088c42d-3062-521f-9b30-cd64a2211cd6-00000026</GUID>
+          <PARENT>Consumables</PARENT>
+          <BASEUNITS>Nos</BASEUNITS>
+          <OPENINGVALUE>4000.00</OPENINGVALUE>
+          <CLOSINGVALUE>13303.67</CLOSINGVALUE>
+          <LASTSALEDATE>20260912</LASTSALEDATE>
+          <GSTAPPLICABLE>Applicable</GSTAPPLICABLE>
+          <GSTTYPEOFSUPPLY>Goods</GSTTYPEOFSUPPLY>
+          <HSNDETAILS.LIST>
+            <HSNCODE>2106</HSNCODE>
+          </HSNDETAILS.LIST>
+          <COSTINGMETHOD>Avg. Cost</COSTINGMETHOD>
+          <VALUATIONMETHOD>Avg. Cost</VALUATIONMETHOD>
+          <ISBATCHWISEON>Yes</ISBATCHWISEON>
+          <ALTERID>37</ALTERID>
+          <OPENINGBALANCE>50 Nos</OPENINGBALANCE>
+          <CLOSINGBALANCE>160 Nos</CLOSINGBALANCE>
+          <LANGUAGENAME.LIST>
+            <NAME.LIST TYPE="String">
+              <NAME>Tonic Syrup</NAME>
+            </NAME.LIST>
+          </LANGUAGENAME.LIST>
+          <GSTDETAILS.LIST>
+            <APPLICABLEFROM>20170701</APPLICABLEFROM>
+            <TAXABILITY>Taxable</TAXABILITY>
+            <HSNCODE>2106</HSNCODE>
+            <STATEWISEDETAILS.LIST>
+              <STATENAME>Any</STATENAME>
+              <RATEDETAILS.LIST>
+                <GSTRATEDUTYHEAD>Central Tax</GSTRATEDUTYHEAD>
+                <GSTRATE>6.00</GSTRATE>
+              </RATEDETAILS.LIST>
+              <RATEDETAILS.LIST>
+                <GSTRATEDUTYHEAD>State Tax</GSTRATEDUTYHEAD>
+                <GSTRATE>6.00</GSTRATE>
+              </RATEDETAILS.LIST>
+              <RATEDETAILS.LIST>
+                <GSTRATEDUTYHEAD>Integrated Tax</GSTRATEDUTYHEAD>
+                <GSTRATE>12.00</GSTRATE>
+              </RATEDETAILS.LIST>
+              <RATEDETAILS.LIST>
+                <GSTRATEDUTYHEAD>Cess</GSTRATEDUTYHEAD>
+                <GSTRATE>0.00</GSTRATE>
+              </RATEDETAILS.LIST>
+            </STATEWISEDETAILS.LIST>
+          </GSTDETAILS.LIST>
+          <BATCHALLOCATIONS.LIST>
+            <GODOWNNAME>Main Location</GODOWNNAME>
+            <BATCHNAME>B-2601</BATCHNAME>
+            <OPENINGVALUE>4000.00</OPENINGVALUE>
+            <OPENINGBALANCE>50 Nos</OPENINGBALANCE>
+          </BATCHALLOCATIONS.LIST>
+        </STOCKITEM>
+        <STOCKITEM NAME="Bolt Pack">
+          <GUID>7a9a4877-43f5-5dfe-84b9-764a1465e52a-00000027</GUID>
+          <PARENT>Hardware</PARENT>
+          <BASEUNITS>Nos</BASEUNITS>
+          <OPENINGVALUE>1500.00</OPENINGVALUE>
+          <CLOSINGVALUE>4090.10</CLOSINGVALUE>
+          <LASTSALEDATE>20260720</LASTSALEDATE>
+          <GSTAPPLICABLE>Applicable</GSTAPPLICABLE>
+          <GSTTYPEOFSUPPLY>Goods</GSTTYPEOFSUPPLY>
+          <HSNDETAILS.LIST>
+            <HSNCODE>7318</HSNCODE>
+          </HSNDETAILS.LIST>
+          <COSTINGMETHOD>Avg. Cost</COSTINGMETHOD>
+          <VALUATIONMETHOD>Avg. Cost</VALUATIONMETHOD>
+          <ALTERID>38</ALTERID>
+          <OPENINGBALANCE>60 Nos</OPENINGBALANCE>
+          <CLOSINGBALANCE>165 Nos</CLOSINGBALANCE>
+          <LANGUAGENAME.LIST>
+            <NAME.LIST TYPE="String">
+              <NAME>Bolt Pack</NAME>
+            </NAME.LIST>
+          </LANGUAGENAME.LIST>
+          <GSTDETAILS.LIST>
+            <APPLICABLEFROM>20170701</APPLICABLEFROM>
+            <TAXABILITY>Taxable</TAXABILITY>
+            <HSNCODE>7318</HSNCODE>
+            <STATEWISEDETAILS.LIST>
+              <STATENAME>Any</STATENAME>
+              <RATEDETAILS.LIST>
+                <GSTRATEDUTYHEAD>Central Tax</GSTRATEDUTYHEAD>
+                <GSTRATE>9.00</GSTRATE>
+              </RATEDETAILS.LIST>
+              <RATEDETAILS.LIST>
+                <GSTRATEDUTYHEAD>State Tax</GSTRATEDUTYHEAD>
+                <GSTRATE>9.00</GSTRATE>
+              </RATEDETAILS.LIST>
+              <RATEDETAILS.LIST>
+                <GSTRATEDUTYHEAD>Integrated Tax</GSTRATEDUTYHEAD>
+                <GSTRATE>18.00</GSTRATE>
+              </RATEDETAILS.LIST>
+              <RATEDETAILS.LIST>
+                <GSTRATEDUTYHEAD>Cess</GSTRATEDUTYHEAD>
+                <GSTRATE>0.00</GSTRATE>
+              </RATEDETAILS.LIST>
+            </STATEWISEDETAILS.LIST>
+          </GSTDETAILS.LIST>
+          <BATCHALLOCATIONS.LIST>
+            <GODOWNNAME>Main Location</GODOWNNAME>
+            <BATCHNAME>Primary Batch</BATCHNAME>
+            <OPENINGVALUE>750.00</OPENINGVALUE>
+            <OPENINGBALANCE>30 Nos</OPENINGBALANCE>
+          </BATCHALLOCATIONS.LIST>
+          <BATCHALLOCATIONS.LIST>
+            <GODOWNNAME>Warehouse 2</GODOWNNAME>
+            <BATCHNAME>Primary Batch</BATCHNAME>
+            <OPENINGVALUE>750.00</OPENINGVALUE>
+            <OPENINGBALANCE>30 Nos</OPENINGBALANCE>
+          </BATCHALLOCATIONS.LIST>
+        </STOCKITEM>
+      </COLLECTION>
+    </DATA>
+  </BODY>
+</ENVELOPE>

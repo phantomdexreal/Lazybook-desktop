@@ -1,0 +1,116 @@
+# LazyBooks | .github/workflows/release.yml
+# Responsibility: Release pipeline
+# Introduced by: Phase 42 (release-desktop)
+# Push a tag vX.Y.Z (stable) or vX.Y.Z-beta.N (beta channel). A Windows runner builds the per-user installer and latest.yml, publishes both to the
+# public releases repo (no token needed to download), then registers a DRAFT row in the master through ci-publish-release.
+# Publishing to devices stays a manual step in the admin Release manager (rollout %, minimum version, force update).
+#
+# One-time setup in this repo (Settings, Secrets and variables, Actions). None of these values is ever written to a file:
+#   variable LB_RELEASES_REPO     owner/name of the public releases repo (binaries only)
+#   variable LB_MASTER_FN_URL     https://<master>.supabase.co/functions/v1
+#   variable LB_MASTER_URL        master registry URL baked into the app (public)
+#   variable LB_MASTER_ANON_KEY   master anon key baked into the app (public by design)
+#   secret   LB_RELEASES_TOKEN    fine-grained token, Contents write on the releases repo only
+#   secret   LB_CI_SECRET         the shared secret that ci-publish-release checks
+name: release
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-beta.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to build again (vX.Y.Z or vX.Y.Z-beta.N)
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  desktop:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+      RELEASES_REPO: ${{ vars.LB_RELEASES_REPO }}
+      LB_MASTER_URL: ${{ vars.LB_MASTER_URL }}
+      LB_MASTER_ANON_KEY: ${{ vars.LB_MASTER_ANON_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Check the tag and the settings
+        shell: bash
+        run: |
+          VERSION="$(node tools/release-meta.mjs version --tag "$TAG")"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          test -n "$RELEASES_REPO" || { echo "variable LB_RELEASES_REPO is not set"; exit 1; }
+          test -n "$LB_MASTER_URL" && test -n "$LB_MASTER_ANON_KEY" || { echo "variables LB_MASTER_URL and LB_MASTER_ANON_KEY must be set (the app cannot activate without them)"; exit 1; }
+
+      - run: npm ci
+
+      - name: Set the version from the tag
+        shell: bash
+        run: npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+      - name: Tests that need no Windows or Electron
+        shell: bash
+        run: |
+          node tests/installer.cjs
+          node tests/updater.cjs
+          node tests/pwa-host.cjs
+          node tests/release.cjs
+
+      - name: Build
+        run: npm run build
+
+      - name: Installer and latest.yml
+        # generic provider only so that electron-builder writes latest.yml; nothing is published by electron-builder itself
+        run: npx electron-builder --win nsis --publish never -c.publish.provider=generic "-c.publish.url=https://github.com/${{ vars.LB_RELEASES_REPO }}/releases/download/${{ env.TAG }}"
+
+      - name: Compute checksum, notes and the register payload
+        shell: bash
+        run: node tools/release-meta.mjs meta --tag "$TAG" --repo "$RELEASES_REPO" --installer "release/LazyBooks-Setup-$VERSION.exe" --out release/meta.json
+
+      - name: Publish to the releases repo
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.LB_RELEASES_TOKEN }}
+        run: |
+          set -e
+          PRE=""
+          case "$TAG" in *-beta.*) PRE="--prerelease";; esac
+          if gh release view "$TAG" --repo "$RELEASES_REPO" >/dev/null 2>&1; then
+            gh release upload "$TAG" "release/LazyBooks-Setup-$VERSION.exe" release/latest.yml --repo "$RELEASES_REPO" --clobber
+          else
+            gh release create "$TAG" "release/LazyBooks-Setup-$VERSION.exe" release/latest.yml --repo "$RELEASES_REPO" --title "LazyBooks Desktop $TAG" --notes-file release/notes.md $PRE
+          fi
+          RID="$(gh api "repos/$RELEASES_REPO/releases/tags/$TAG" --jq .id)"
+          echo "RELEASE_ID=$RID" >> "$GITHUB_ENV"
+
+      - name: Register release in LazyBooks master (draft)
+        shell: bash
+        env:
+          CI_SECRET: ${{ secrets.LB_CI_SECRET }}
+          MASTER_FN_URL: ${{ vars.LB_MASTER_FN_URL }}
+        run: node tools/release-meta.mjs register --meta release/meta.json --release-id "$RELEASE_ID"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ env.VERSION }}
+          path: |
+            release/LazyBooks-Setup-*.exe
+            release/latest.yml
+            release/meta.json
+            release/notes.md
+          retention-days: 30

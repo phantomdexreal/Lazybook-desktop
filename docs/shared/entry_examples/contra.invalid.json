@@ -1,0 +1,16 @@
+{
+ "v": 1,
+ "kind": "contra",
+ "client_request_id": "44444444-4444-4444-8444-444444444445",
+ "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+ "created_at": "2026-09-25T10:15:00Z",
+ "device_id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+ "data": {
+  "voucher_type_guid": "93aed313-194f-5e15-83fb-87019bb1dcfd-0000002d",
+  "base_kind": "contra",
+  "date": "2026-09-20",
+  "from_ledger_guid": "152b9a3d-c9d0-52d0-9f5f-7e842f5fe793-0000000f",
+  "to_ledger_guid": "152b9a3d-c9d0-52d0-9f5f-7e842f5fe793-0000000f",
+  "amount": "5000.00"
+ }
+}

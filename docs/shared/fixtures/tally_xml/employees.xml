@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ENVELOPE>
+  <HEADER>
+    <VERSION>1</VERSION>
+    <STATUS>1</STATUS>
+  </HEADER>
+  <BODY>
+    <DATA>
+      <COLLECTION>
+        <EMPLOYEE NAME="Ravi Kumar">
+          <GUID>0e263c81-3ec4-54fb-8670-7d03f8e7e759-00000070</GUID>
+          <EMPLOYEENUMBER>E-1</EMPLOYEENUMBER>
+          <DESIGNATION>Sales Executive</DESIGNATION>
+          <DATEOFJOINING>20240401</DATEOFJOINING>
+          <ALTERID>113</ALTERID>
+        </EMPLOYEE>
+        <EMPLOYEE NAME="Sunita Joshi">
+          <GUID>fefd9d63-6f55-5909-bcd4-f8610a68e286-00000071</GUID>
+          <EMPLOYEENUMBER>E-2</EMPLOYEENUMBER>
+          <DESIGNATION>Accountant</DESIGNATION>
+          <DATEOFJOINING>20240401</DATEOFJOINING>
+          <ALTERID>114</ALTERID>
+        </EMPLOYEE>
+      </COLLECTION>
+    </DATA>
+  </BODY>
+</ENVELOPE>

@@ -1,0 +1,13 @@
+{
+ "v": 1,
+ "kind": "cancel",
+ "client_request_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbc",
+ "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+ "created_at": "2026-09-25T10:15:00Z",
+ "device_id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+ "data": {
+  "target_voucher_guid": "no-such-voucher",
+  "expected_alter_id": 77,
+  "reason": "Wrong party"
+ }
+}

@@ -1,0 +1,12 @@
+reset role;
+insert into supabase_projects(name,url,anon_key,status) values ('p1','https://x.supabase.co','anonkey','active');
+insert into licenses(license_key,company_name,plan_id,project_id,expires_at) select 'LB-TEST','Demo Co','pro',id,now()+interval '1 year' from supabase_projects limit 1;
+insert into themes(slug,name,json,is_default) values ('obsidian-violet','Obsidian Violet','{"x":1}',true);
+insert into app_releases(app,version,status,rollout_pct,min_supported_version) values ('pwa','1.2.0','published',100,'1.0.0'),('pwa','1.10.0','published',100,'1.0.0');
+set role anon;
+select public.resolve_license('lb-test')->>'ok' as resolve_ok;
+select public.app_bootstrap('LB-TEST','pwa','1.2.0','dev-1','web')->'update' as upd;
+select jsonb_array_length(public.get_themes('LB-TEST')) as themes;
+do $$ begin begin perform 1 from licenses limit 1; raise notice 'anon table read blocked? rows visible'; exception when insufficient_privilege then raise notice 'OK anon cannot read licenses table'; end; end $$;
+select public.submit_request('LB-TEST','new_staff_user','{"name":"Ravi"}')->>'ok' as submit_ok;
+select (public.app_bootstrap('LB-TEST','pwa','1.0.0','d1','web')->'config'->>'contract_version') as contract;

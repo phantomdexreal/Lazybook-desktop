@@ -1,0 +1,33 @@
+{
+ "v": 1,
+ "kind": "journal",
+ "client_request_id": "55555555-5555-4555-8555-555555555555",
+ "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+ "created_at": "2026-09-25T10:15:00Z",
+ "device_id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+ "data": {
+  "voucher_type_guid": "d1455427-3d6b-53a6-87ef-207348696827-0000002e",
+  "base_kind": "journal",
+  "date": "2026-09-30",
+  "narration": "Godown rent billed by supplier",
+  "lines": [
+   {
+    "ledger_guid": "6790b868-6f25-5057-bb05-d99c8577c5de-0000001e",
+    "side": "dr",
+    "amount": "5000.00"
+   },
+   {
+    "ledger_guid": "dc08287e-d6a4-5cda-9ed3-8eedc338468b-00000014",
+    "side": "cr",
+    "amount": "5000.00",
+    "bills": [
+     {
+      "type": "new_ref",
+      "name": "RENT-OCT",
+      "amount": "5000.00"
+     }
+    ]
+   }
+  ]
+ }
+}

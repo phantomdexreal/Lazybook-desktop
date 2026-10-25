@@ -1,0 +1,74 @@
+[
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "ledger_guid": "91d185ff-e8f9-5976-a314-6ca981fa9e73-00000011",
+  "addr_index": 0,
+  "applicable_from": "2026-04-01",
+  "mailing_name": "Alpha Retail",
+  "lines": [
+   "12 Market Road",
+   "Dadar",
+   "Mumbai"
+  ],
+  "state_name": "Maharashtra",
+  "country": "India",
+  "pincode": "400014"
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "ledger_guid": "0809e8be-2273-5f10-a2da-1956ba3373f5-00000012",
+  "addr_index": 0,
+  "applicable_from": "2026-04-01",
+  "mailing_name": "Beta Stores",
+  "lines": [
+   "7 Brigade Lane",
+   "Bengaluru"
+  ],
+  "state_name": "Karnataka",
+  "country": "India",
+  "pincode": "560001"
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "ledger_guid": "a7d89e67-a0ce-5ee5-a8e7-9394183af175-00000013",
+  "addr_index": 0,
+  "applicable_from": "2026-04-01",
+  "mailing_name": "Gamma Enterprises",
+  "lines": [
+   "Plot 4",
+   "MIDC Andheri",
+   "Mumbai"
+  ],
+  "state_name": "Maharashtra",
+  "country": "India",
+  "pincode": "400093"
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "ledger_guid": "dc08287e-d6a4-5cda-9ed3-8eedc338468b-00000014",
+  "addr_index": 0,
+  "applicable_from": "2026-04-01",
+  "mailing_name": "Omega Supplies",
+  "lines": [
+   "88 Supply Park",
+   "Thane"
+  ],
+  "state_name": "Maharashtra",
+  "country": "India",
+  "pincode": "400601"
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "ledger_guid": "1266481f-5d09-501f-81c3-1f21cd9589dd-00000015",
+  "addr_index": 0,
+  "applicable_from": "2026-04-01",
+  "mailing_name": "Zeta Wholesale",
+  "lines": [
+   "5 Ring Road",
+   "Surat"
+  ],
+  "state_name": "Gujarat",
+  "country": "India",
+  "pincode": "395002"
+ }
+]

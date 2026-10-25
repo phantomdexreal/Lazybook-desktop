@@ -1,0 +1,12 @@
+{
+ "v": 1,
+ "kind": "delete",
+ "client_request_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccd",
+ "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+ "created_at": "2026-09-25T10:15:00Z",
+ "device_id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+ "data": {
+  "target_voucher_guid": "a164a7d5-7762-5bf8-84c6-40e386eed2b3-0000004d",
+  "expected_alter_id": -1
+ }
+}

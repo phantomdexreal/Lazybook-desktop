@@ -1,0 +1,80 @@
+[
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "stock_item_guid": "1247b981-fb00-5f75-acd8-0acea03f7a2a-00000022",
+  "applicable_from": "2017-07-01",
+  "hsn_code": "8479",
+  "taxability": "Taxable",
+  "calc_type": "",
+  "is_reverse_charge": false,
+  "igst_rate": "18.00",
+  "cgst_rate": "9.00",
+  "sgst_rate": "9.00",
+  "cess_rate": "0.00"
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "stock_item_guid": "eeb88362-d3bd-5080-86b2-855c920840ad-00000023",
+  "applicable_from": "2017-07-01",
+  "hsn_code": "8480",
+  "taxability": "Taxable",
+  "calc_type": "",
+  "is_reverse_charge": false,
+  "igst_rate": "12.00",
+  "cgst_rate": "6.00",
+  "sgst_rate": "6.00",
+  "cess_rate": "0.00"
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "stock_item_guid": "1955738e-d4c9-5894-a03a-5d1d1f2473b6-00000024",
+  "applicable_from": "2017-07-01",
+  "hsn_code": "8543",
+  "taxability": "Taxable",
+  "calc_type": "",
+  "is_reverse_charge": false,
+  "igst_rate": "18.00",
+  "cgst_rate": "9.00",
+  "sgst_rate": "9.00",
+  "cess_rate": "0.00"
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "stock_item_guid": "cc9a7129-7a8c-5cd0-863b-98de5fce151e-00000025",
+  "applicable_from": "2017-07-01",
+  "hsn_code": "7318",
+  "taxability": "Taxable",
+  "calc_type": "",
+  "is_reverse_charge": false,
+  "igst_rate": "5.00",
+  "cgst_rate": "2.50",
+  "sgst_rate": "2.50",
+  "cess_rate": "0.00"
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "stock_item_guid": "c088c42d-3062-521f-9b30-cd64a2211cd6-00000026",
+  "applicable_from": "2017-07-01",
+  "hsn_code": "2106",
+  "taxability": "Taxable",
+  "calc_type": "",
+  "is_reverse_charge": false,
+  "igst_rate": "12.00",
+  "cgst_rate": "6.00",
+  "sgst_rate": "6.00",
+  "cess_rate": "0.00"
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "stock_item_guid": "7a9a4877-43f5-5dfe-84b9-764a1465e52a-00000027",
+  "applicable_from": "2017-07-01",
+  "hsn_code": "7318",
+  "taxability": "Taxable",
+  "calc_type": "",
+  "is_reverse_charge": false,
+  "igst_rate": "18.00",
+  "cgst_rate": "9.00",
+  "sgst_rate": "9.00",
+  "cess_rate": "0.00"
+ }
+]

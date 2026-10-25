@@ -1,0 +1,24 @@
+{
+ "v": 1,
+ "kind": "inventory_voucher",
+ "client_request_id": "66666666-6666-4666-8666-666666666668",
+ "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+ "created_at": "2026-09-25T10:15:00Z",
+ "device_id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+ "data": {
+  "voucher_type_guid": "969172ed-c1d6-5a8c-8487-a40cad5a686b-00000031",
+  "base_kind": "delivery_note",
+  "date": "2026-09-22",
+  "party_ledger_guid": "a7d89e67-a0ce-5ee5-a8e7-9394183af175-00000013",
+  "lines": [
+   {
+    "stock_item_guid": "no-such-item",
+    "godown_guid": "n:Main Location",
+    "qty": "5",
+    "unit": "Nos",
+    "rate": "205.00",
+    "amount": "1025.00"
+   }
+  ]
+ }
+}

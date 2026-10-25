@@ -1,0 +1,22 @@
+{
+ "v": 1,
+ "kind": "stock_item",
+ "client_request_id": "99999999-9999-4999-8999-999999999999",
+ "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+ "created_at": "2026-09-25T10:15:00Z",
+ "device_id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+ "data": {
+  "name": "Widget E",
+  "parent_stock_group_guid": "4a494970-b2dd-57f8-a3b6-0bf297564682-0000006b",
+  "unit_guid": "f8d35dd9-981a-55db-b360-70938a664e46-0000006d",
+  "hsn": "8479",
+  "gst_rate": "18.00",
+  "gst_taxability": "taxable",
+  "opening": {
+   "godown_guid": "n:Main Location",
+   "qty": "10",
+   "rate": "40.00"
+  },
+  "reorder_level": "5"
+ }
+}

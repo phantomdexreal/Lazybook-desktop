@@ -1,0 +1,68 @@
+[
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "stock_item_guid": "1247b981-fb00-5f75-acd8-0acea03f7a2a-00000022",
+  "godown_name": "Main Location",
+  "godown_guid": "n:Main Location",
+  "batch_name": "Primary Batch",
+  "opening_qty": "100.00",
+  "opening_value": "5000.00",
+  "mfg_date": null,
+  "expiry_date": null
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "stock_item_guid": "eeb88362-d3bd-5080-86b2-855c920840ad-00000023",
+  "godown_name": "Main Location",
+  "godown_guid": "n:Main Location",
+  "batch_name": "Primary Batch",
+  "opening_qty": "40.00",
+  "opening_value": "4800.00",
+  "mfg_date": null,
+  "expiry_date": null
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "stock_item_guid": "cc9a7129-7a8c-5cd0-863b-98de5fce151e-00000025",
+  "godown_name": "Warehouse 2",
+  "godown_guid": "n:Warehouse 2",
+  "batch_name": "Primary Batch",
+  "opening_qty": "200.00",
+  "opening_value": "2000.00",
+  "mfg_date": null,
+  "expiry_date": null
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "stock_item_guid": "c088c42d-3062-521f-9b30-cd64a2211cd6-00000026",
+  "godown_name": "Main Location",
+  "godown_guid": "n:Main Location",
+  "batch_name": "B-2601",
+  "opening_qty": "50.00",
+  "opening_value": "4000.00",
+  "mfg_date": null,
+  "expiry_date": null
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "stock_item_guid": "7a9a4877-43f5-5dfe-84b9-764a1465e52a-00000027",
+  "godown_name": "Main Location",
+  "godown_guid": "n:Main Location",
+  "batch_name": "Primary Batch",
+  "opening_qty": "30.00",
+  "opening_value": "750.00",
+  "mfg_date": null,
+  "expiry_date": null
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "stock_item_guid": "7a9a4877-43f5-5dfe-84b9-764a1465e52a-00000027",
+  "godown_name": "Warehouse 2",
+  "godown_guid": "n:Warehouse 2",
+  "batch_name": "Primary Batch",
+  "opening_qty": "30.00",
+  "opening_value": "750.00",
+  "mfg_date": null,
+  "expiry_date": null
+ }
+]

@@ -1,0 +1,12 @@
+[
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "guid": "f37bcd25-06e3-5eb5-a506-9f031645f61e-00000072",
+  "name": "Maharashtra Registration",
+  "gstin": "27AAACD1234E1Z5",
+  "state_name": "Maharashtra",
+  "registration_type": "Regular",
+  "applicable_from": "2017-07-01",
+  "alter_id": 115
+ }
+]

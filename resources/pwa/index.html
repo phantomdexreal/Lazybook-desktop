@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LazyBooks (stub page)</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 14px/1.5 system-ui, sans-serif; margin: 0; padding: 24px; background: Canvas; color: CanvasText; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  p { margin: 0 0 12px; opacity: .75; }
+  button { font: inherit; padding: 6px 12px; margin: 0 8px 8px 0; }
+  table { border-collapse: collapse; width: 100%; max-width: 760px; }
+  td, th { text-align: left; padding: 4px 8px; border-bottom: 1px solid color-mix(in srgb, CanvasText 20%, transparent); }
+  code { font-family: ui-monospace, Consolas, monospace; }
+</style>
+</head>
+<body>
+<h1>LazyBooks</h1>
+<p>This is the placeholder page. The real app replaces the files in this folder. It works with no internet.</p>
+<div>
+  <button id="run">Run bridge self-test</button>
+  <button id="save">Save a test file</button>
+  <button id="folder">Open data folder</button>
+  <button id="link">Open a web link</button>
+</div>
+<table id="out" data-state="idle"><thead><tr><th>Bridge call</th><th>Result</th></tr></thead><tbody></tbody></table>
+<script>
+(function () {
+  var body = document.querySelector('#out tbody');
+  var table = document.getElementById('out');
+  function line(name, value) {
+    var tr = document.createElement('tr');
+    tr.setAttribute('data-call', name);
+    var a = document.createElement('td'); a.textContent = name;
+    var b = document.createElement('td'); var c = document.createElement('code'); c.textContent = JSON.stringify(value); b.appendChild(c);
+    tr.appendChild(a); tr.appendChild(b); body.appendChild(tr);
+  }
+  var host = window.LazyHost;
+  async function selfTest() {
+    body.textContent = '';
+    table.setAttribute('data-state', 'running');
+    if (!host) { line('LazyHost', 'missing (running in a plain browser)'); table.setAttribute('data-state', 'no-host'); return; }
+    line('platform', host.platform);
+    line('capabilities', host.capabilities);
+    line('appInfo', await host.appInfo());
+    var plain = ['scanBarcode', 'pickContact', 'getPushToken'];
+    for (var i = 0; i < plain.length; i++) line(plain[i], await host[plain[i]]());
+    line('shareFile', await host.shareFile({ name: 't.txt', mime: 'text/plain', dataBase64: 'dGVzdA==' }));
+    line('getLocation', await host.getLocation({ highAccuracy: false }));
+    line('biometricAuth', await host.biometricAuth('test'));
+    line('scheduleNotification', await host.scheduleNotification({ id: 'x', title: 't', body: 'b', at: Date.now() + 1000 }));
+    line('cancelNotification', await host.cancelNotification('x'));
+    line('openUrl (blocked scheme)', await host.openUrl('javascript:alert(1)'));
+    line('checkForUpdate', await host.checkForUpdate());
+    var p = await host.desktop.getPassphraseHandoff();
+    line('desktop.getPassphraseHandoff', p && p.ok ? { ok: true, characters: String(p.passphrase).length } : p);
+    table.setAttribute('data-state', 'done');
+  }
+  document.getElementById('run').onclick = selfTest;
+  document.getElementById('save').onclick = async function () { line('saveFile', await host.saveFile({ name: 'lazybooks-test.txt', mime: 'text/plain', dataBase64: btoa('LazyBooks bridge test') })); };
+  document.getElementById('folder').onclick = async function () { line('desktop.openDataFolder', await host.desktop.openDataFolder()); };
+  document.getElementById('link').onclick = async function () { line('openUrl (https)', await host.openUrl('https://example.com/')); };
+  selfTest();
+})();
+</script>
+</body>
+</html>

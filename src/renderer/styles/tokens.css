@@ -1,0 +1,67 @@
+/*
+LazyBooks | src/renderer/styles/tokens.css
+Responsibility: Shared tokens
+Introduced by: Phase 4 (ui-shell) — see PHASES.md before editing.
+STATUS: IMPLEMENTED (Phase 4)
+*/
+
+/*
+ * Fallback tokens (the only place hex literals are allowed besides theme JSON). They match the default dark theme
+ * and are overridden by the generated rule on :root[data-theme][data-mode] from the theme engine.
+ */
+:root {
+  --lb-bg: #0A0910;
+  --lb-surface: #121019;
+  --lb-surface-raised: #1A1724;
+  --lb-surface-sunken: #0E0C15;
+  --lb-border: #2A2638;
+  --lb-border-strong: #3A3550;
+  --lb-text: #ECEAF4;
+  --lb-text-muted: #A9A4BE;
+  --lb-text-faint: #7E7993;
+  --lb-accent: #8F73FF;
+  --lb-accent-hover: #A18AFF;
+  --lb-accent-active: #7B5CF0;
+  --lb-accent-contrast: #0A0910;
+  --lb-accent-soft: #1E1736;
+  --lb-focus-ring: #8F73FF;
+  --lb-success: #4ADE80;
+  --lb-warning: #FBBF24;
+  --lb-danger: #F87171;
+  --lb-info: #60A5FA;
+  --lb-overlay: rgba(5,4,10,0.62);
+  --lb-shadow-color: #000000;
+  --lb-chart-1: #9B7BFF;
+  --lb-chart-2: #4FD1C5;
+  --lb-chart-3: #F6AD55;
+  --lb-chart-4: #F687B3;
+  --lb-chart-5: #63B3ED;
+  --lb-chart-6: #68D391;
+  --lb-chart-7: #FC8181;
+  --lb-chart-8: #B794F4;
+  --lb-radius-sm: 6px;
+  --lb-radius-md: 10px;
+  --lb-radius-lg: 14px;
+  --lb-radius-xl: 20px;
+  --lb-font-sans: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --lb-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --lb-motion-fast: 120ms;
+  --lb-motion-base: 200ms;
+  --lb-motion-slow: 320ms;
+  --lb-focus-ring-width: 2px;
+  --lb-shadow-float: 0 8px 24px color-mix(in srgb, var(--lb-shadow-color) 35%, transparent), 0 1px 2px color-mix(in srgb, var(--lb-shadow-color) 25%, transparent);
+}
+
+:focus-visible {
+  outline: var(--lb-focus-ring-width) solid var(--lb-focus-ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,39 @@
+{
+ "applies_on_top_of": "initial_sequence.jsonl",
+ "row_counts": {
+  "tm_company": 1,
+  "tm_group": 13,
+  "tm_ledger": 19,
+  "tm_ledger_address": 5,
+  "tm_ledger_contact": 5,
+  "tm_ledger_gst": 5,
+  "tm_ledger_opening_bill": 3,
+  "tm_voucher_type": 15,
+  "tm_stock_group": 2,
+  "tm_stock_category": 0,
+  "tm_unit": 2,
+  "tm_godown": 2,
+  "tm_stock_item": 6,
+  "tm_stock_item_gst": 6,
+  "tm_stock_batch_opening": 6,
+  "tm_cost_centre": 0,
+  "tm_currency": 1,
+  "tm_employee": 2,
+  "tm_gst_registration": 1,
+  "tx_voucher": 52,
+  "tx_ledger_line": 158,
+  "tx_inventory_line": 51,
+  "tx_batch_alloc": 52,
+  "tx_bill_alloc": 40,
+  "tx_tax_line": 70,
+  "ref_voucher_kind": 25
+ },
+ "facts": [
+  "voucher R-009 exists with 2 ledger lines and 1 bill allocation (Agst Ref TI-010, 1000.00)",
+  "voucher TI-013 and all its child rows are gone",
+  "S-002 narration is \"Entered from phone (edited)\"",
+  "ledger guid of Gamma Enterprises now has name \"Gamma Enterprises Ltd\"",
+  "Alpha Retail closing_balance -19980.00, HDFC Bank -63567.00",
+  "every voucher still sums to zero"
+ ]
+}

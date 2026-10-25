@@ -1,0 +1,1953 @@
+{
+ "rules_version": 1,
+ "entry_payload_v": 1,
+ "envelope": {
+  "v": {
+   "t": "int",
+   "req": true,
+   "min": 1,
+   "max": 1
+  },
+  "kind": {
+   "t": "enum",
+   "req": true,
+   "values": [
+    "invoice",
+    "receipt",
+    "payment",
+    "contra",
+    "journal",
+    "inventory_voucher",
+    "order",
+    "quotation",
+    "ledger",
+    "stock_item",
+    "alter",
+    "cancel",
+    "delete"
+   ]
+  },
+  "client_request_id": {
+   "t": "uuid",
+   "req": true
+  },
+  "company_guid": {
+   "t": "str",
+   "req": true,
+   "max": 80,
+   "min": 1
+  },
+  "created_at": {
+   "t": "datetime",
+   "req": true
+  },
+  "device_id": {
+   "t": "uuid",
+   "req": true
+  },
+  "data": {
+   "t": "object",
+   "req": true
+  }
+ },
+ "kinds": {
+  "invoice": {
+   "allowed_base_kinds": [
+    "sales",
+    "purchase",
+    "credit_note",
+    "debit_note"
+   ],
+   "fields": {
+    "voucher_type_guid": {
+     "t": "guid",
+     "req": true,
+     "ref": "voucher_type"
+    },
+    "base_kind": {
+     "t": "str",
+     "req": true,
+     "max": 30,
+     "min": 0
+    },
+    "date": {
+     "t": "date",
+     "req": true
+    },
+    "number": {
+     "t": "str",
+     "req": false,
+     "max": 30,
+     "min": 0
+    },
+    "reference": {
+     "t": "str",
+     "req": false,
+     "max": 60,
+     "min": 0
+    },
+    "reference_date": {
+     "t": "date",
+     "req": false
+    },
+    "narration": {
+     "t": "str",
+     "req": false,
+     "max": 500,
+     "min": 0
+    },
+    "party_ledger_guid": {
+     "t": "guid",
+     "req": true,
+     "ref": "ledger"
+    },
+    "item_ledger_guid": {
+     "t": "guid",
+     "req": true,
+     "ref": "ledger"
+    },
+    "place_of_supply": {
+     "t": "str",
+     "req": false,
+     "max": 40,
+     "min": 0
+    },
+    "party_gstin": {
+     "t": "str",
+     "req": false,
+     "max": 15,
+     "min": 0
+    },
+    "lines": {
+     "t": "array",
+     "req": true,
+     "min": 1,
+     "max": 200,
+     "item": {
+      "t": "object",
+      "req": false,
+      "fields": {
+       "stock_item_guid": {
+        "t": "guid",
+        "req": true,
+        "ref": "stock_item"
+       },
+       "godown_guid": {
+        "t": "guid",
+        "req": false,
+        "ref": "godown"
+       },
+       "batch_name": {
+        "t": "str",
+        "req": false,
+        "max": 60,
+        "min": 0
+       },
+       "qty": {
+        "t": "money_pos",
+        "req": true
+       },
+       "unit": {
+        "t": "str",
+        "req": true,
+        "max": 20,
+        "min": 0
+       },
+       "rate": {
+        "t": "money_pos",
+        "req": true
+       },
+       "discount_pct": {
+        "t": "pct",
+        "req": false
+       },
+       "amount": {
+        "t": "money",
+        "req": true
+       },
+       "gst_rate": {
+        "t": "pct",
+        "req": true
+       },
+       "cess_rate": {
+        "t": "pct",
+        "req": false
+       },
+       "hsn": {
+        "t": "str",
+        "req": false,
+        "max": 12,
+        "min": 0
+       },
+       "order_no": {
+        "t": "str",
+        "req": false,
+        "max": 30,
+        "min": 0
+       },
+       "description": {
+        "t": "str",
+        "req": false,
+        "max": 200,
+        "min": 0
+       }
+      }
+     }
+    },
+    "charges": {
+     "t": "array",
+     "req": false,
+     "min": 0,
+     "max": 20,
+     "item": {
+      "t": "object",
+      "req": false,
+      "fields": {
+       "ledger_guid": {
+        "t": "guid",
+        "req": true,
+        "ref": "ledger"
+       },
+       "amount": {
+        "t": "money_pos",
+        "req": true
+       },
+       "gst_rate": {
+        "t": "pct",
+        "req": false
+       }
+      }
+     }
+    },
+    "tax": {
+     "t": "object",
+     "req": true,
+     "fields": {
+      "mode": {
+       "t": "enum",
+       "req": true,
+       "values": [
+        "intra",
+        "inter",
+        "none"
+       ]
+      },
+      "lines": {
+       "t": "array",
+       "req": false,
+       "min": 0,
+       "max": null,
+       "item": {
+        "t": "object",
+        "req": false,
+        "fields": {
+         "head": {
+          "t": "enum",
+          "req": true,
+          "values": [
+           "cgst",
+           "sgst",
+           "igst",
+           "cess"
+          ]
+         },
+         "ledger_guid": {
+          "t": "guid",
+          "req": true,
+          "ref": "ledger"
+         },
+         "amount": {
+          "t": "money",
+          "req": true
+         },
+         "breakup": {
+          "t": "array",
+          "req": false,
+          "min": 0,
+          "max": null,
+          "item": {
+           "t": "object",
+           "req": false,
+           "fields": {
+            "rate": {
+             "t": "pct",
+             "req": true
+            },
+            "taxable": {
+             "t": "money",
+             "req": true
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "round_off": {
+     "t": "object",
+     "req": false,
+     "fields": {
+      "ledger_guid": {
+       "t": "guid",
+       "req": true,
+       "ref": "ledger"
+      },
+      "amount": {
+       "t": "money",
+       "req": true
+      }
+     }
+    },
+    "total": {
+     "t": "money_pos",
+     "req": true
+    },
+    "bills": {
+     "t": "array",
+     "req": false,
+     "min": 0,
+     "max": 20,
+     "item": {
+      "t": "object",
+      "req": false,
+      "fields": {
+       "type": {
+        "t": "enum",
+        "req": true,
+        "values": [
+         "new_ref",
+         "agst_ref",
+         "advance",
+         "on_account"
+        ]
+       },
+       "name": {
+        "t": "str",
+        "req": false,
+        "max": 60,
+        "min": 0
+       },
+       "amount": {
+        "t": "money_pos",
+        "req": true
+       }
+      }
+     }
+    },
+    "due_days": {
+     "t": "int",
+     "req": false,
+     "min": 0,
+     "max": 365
+    },
+    "einvoice": {
+     "t": "object",
+     "req": false,
+     "fields": {
+      "generate": {
+       "t": "bool",
+       "req": true
+      }
+     }
+    },
+    "eway": {
+     "t": "object",
+     "req": false,
+     "fields": {
+      "generate": {
+       "t": "bool",
+       "req": true
+      },
+      "transporter_id": {
+       "t": "str",
+       "req": false,
+       "max": 20,
+       "min": 0
+      },
+      "vehicle_no": {
+       "t": "str",
+       "req": false,
+       "max": 15,
+       "min": 0
+      },
+      "distance_km": {
+       "t": "int",
+       "req": false,
+       "min": 0,
+       "max": 4000
+      },
+      "mode": {
+       "t": "enum",
+       "req": false,
+       "values": [
+        "road",
+        "rail",
+        "air",
+        "ship"
+       ]
+      }
+     }
+    }
+   },
+   "flags": {
+    "einvoice": "einvoice_eway",
+    "eway": "einvoice_eway",
+    "_kind": "entries"
+   }
+  },
+  "receipt": {
+   "allowed_base_kinds": [
+    "receipt"
+   ],
+   "fields": {
+    "voucher_type_guid": {
+     "t": "guid",
+     "req": true,
+     "ref": "voucher_type"
+    },
+    "base_kind": {
+     "t": "str",
+     "req": true,
+     "max": 30,
+     "min": 0
+    },
+    "date": {
+     "t": "date",
+     "req": true
+    },
+    "number": {
+     "t": "str",
+     "req": false,
+     "max": 30,
+     "min": 0
+    },
+    "reference": {
+     "t": "str",
+     "req": false,
+     "max": 60,
+     "min": 0
+    },
+    "reference_date": {
+     "t": "date",
+     "req": false
+    },
+    "narration": {
+     "t": "str",
+     "req": false,
+     "max": 500,
+     "min": 0
+    },
+    "party_ledger_guid": {
+     "t": "guid",
+     "req": true,
+     "ref": "ledger"
+    },
+    "cash_bank_ledger_guid": {
+     "t": "guid",
+     "req": true,
+     "ref": "ledger"
+    },
+    "amount": {
+     "t": "money_pos",
+     "req": true
+    },
+    "bills": {
+     "t": "array",
+     "req": false,
+     "min": 0,
+     "max": 20,
+     "item": {
+      "t": "object",
+      "req": false,
+      "fields": {
+       "type": {
+        "t": "enum",
+        "req": true,
+        "values": [
+         "new_ref",
+         "agst_ref",
+         "advance",
+         "on_account"
+        ]
+       },
+       "name": {
+        "t": "str",
+        "req": false,
+        "max": 60,
+        "min": 0
+       },
+       "amount": {
+        "t": "money_pos",
+        "req": true
+       }
+      }
+     }
+    },
+    "instrument": {
+     "t": "object",
+     "req": false,
+     "fields": {
+      "type": {
+       "t": "enum",
+       "req": false,
+       "values": [
+        "cheque",
+        "neft",
+        "rtgs",
+        "upi",
+        "card",
+        "cash",
+        "other"
+       ]
+      },
+      "number": {
+       "t": "str",
+       "req": false,
+       "max": 40,
+       "min": 0
+      },
+      "date": {
+       "t": "date",
+       "req": false
+      },
+      "bank": {
+       "t": "str",
+       "req": false,
+       "max": 60,
+       "min": 0
+      }
+     }
+    }
+   },
+   "flags": {
+    "_kind": "entries"
+   }
+  },
+  "payment": {
+   "allowed_base_kinds": [
+    "payment"
+   ],
+   "fields": {
+    "voucher_type_guid": {
+     "t": "guid",
+     "req": true,
+     "ref": "voucher_type"
+    },
+    "base_kind": {
+     "t": "str",
+     "req": true,
+     "max": 30,
+     "min": 0
+    },
+    "date": {
+     "t": "date",
+     "req": true
+    },
+    "number": {
+     "t": "str",
+     "req": false,
+     "max": 30,
+     "min": 0
+    },
+    "reference": {
+     "t": "str",
+     "req": false,
+     "max": 60,
+     "min": 0
+    },
+    "reference_date": {
+     "t": "date",
+     "req": false
+    },
+    "narration": {
+     "t": "str",
+     "req": false,
+     "max": 500,
+     "min": 0
+    },
+    "party_ledger_guid": {
+     "t": "guid",
+     "req": true,
+     "ref": "ledger"
+    },
+    "cash_bank_ledger_guid": {
+     "t": "guid",
+     "req": true,
+     "ref": "ledger"
+    },
+    "amount": {
+     "t": "money_pos",
+     "req": true
+    },
+    "bills": {
+     "t": "array",
+     "req": false,
+     "min": 0,
+     "max": 20,
+     "item": {
+      "t": "object",
+      "req": false,
+      "fields": {
+       "type": {
+        "t": "enum",
+        "req": true,
+        "values": [
+         "new_ref",
+         "agst_ref",
+         "advance",
+         "on_account"
+        ]
+       },
+       "name": {
+        "t": "str",
+        "req": false,
+        "max": 60,
+        "min": 0
+       },
+       "amount": {
+        "t": "money_pos",
+        "req": true
+       }
+      }
+     }
+    },
+    "instrument": {
+     "t": "object",
+     "req": false,
+     "fields": {
+      "type": {
+       "t": "enum",
+       "req": false,
+       "values": [
+        "cheque",
+        "neft",
+        "rtgs",
+        "upi",
+        "card",
+        "cash",
+        "other"
+       ]
+      },
+      "number": {
+       "t": "str",
+       "req": false,
+       "max": 40,
+       "min": 0
+      },
+      "date": {
+       "t": "date",
+       "req": false
+      },
+      "bank": {
+       "t": "str",
+       "req": false,
+       "max": 60,
+       "min": 0
+      }
+     }
+    }
+   },
+   "flags": {
+    "_kind": "entries"
+   }
+  },
+  "contra": {
+   "allowed_base_kinds": [
+    "contra"
+   ],
+   "fields": {
+    "voucher_type_guid": {
+     "t": "guid",
+     "req": true,
+     "ref": "voucher_type"
+    },
+    "base_kind": {
+     "t": "str",
+     "req": true,
+     "max": 30,
+     "min": 0
+    },
+    "date": {
+     "t": "date",
+     "req": true
+    },
+    "number": {
+     "t": "str",
+     "req": false,
+     "max": 30,
+     "min": 0
+    },
+    "reference": {
+     "t": "str",
+     "req": false,
+     "max": 60,
+     "min": 0
+    },
+    "reference_date": {
+     "t": "date",
+     "req": false
+    },
+    "narration": {
+     "t": "str",
+     "req": false,
+     "max": 500,
+     "min": 0
+    },
+    "from_ledger_guid": {
+     "t": "guid",
+     "req": true,
+     "ref": "ledger"
+    },
+    "to_ledger_guid": {
+     "t": "guid",
+     "req": true,
+     "ref": "ledger"
+    },
+    "amount": {
+     "t": "money_pos",
+     "req": true
+    },
+    "instrument": {
+     "t": "object",
+     "req": false,
+     "fields": {
+      "type": {
+       "t": "enum",
+       "req": false,
+       "values": [
+        "cheque",
+        "neft",
+        "rtgs",
+        "upi",
+        "card",
+        "cash",
+        "other"
+       ]
+      },
+      "number": {
+       "t": "str",
+       "req": false,
+       "max": 40,
+       "min": 0
+      },
+      "date": {
+       "t": "date",
+       "req": false
+      },
+      "bank": {
+       "t": "str",
+       "req": false,
+       "max": 60,
+       "min": 0
+      }
+     }
+    }
+   },
+   "flags": {
+    "_kind": "entries"
+   }
+  },
+  "journal": {
+   "allowed_base_kinds": [
+    "journal"
+   ],
+   "fields": {
+    "voucher_type_guid": {
+     "t": "guid",
+     "req": true,
+     "ref": "voucher_type"
+    },
+    "base_kind": {
+     "t": "str",
+     "req": true,
+     "max": 30,
+     "min": 0
+    },
+    "date": {
+     "t": "date",
+     "req": true
+    },
+    "number": {
+     "t": "str",
+     "req": false,
+     "max": 30,
+     "min": 0
+    },
+    "reference": {
+     "t": "str",
+     "req": false,
+     "max": 60,
+     "min": 0
+    },
+    "reference_date": {
+     "t": "date",
+     "req": false
+    },
+    "narration": {
+     "t": "str",
+     "req": false,
+     "max": 500,
+     "min": 0
+    },
+    "lines": {
+     "t": "array",
+     "req": true,
+     "min": 2,
+     "max": 100,
+     "item": {
+      "t": "object",
+      "req": false,
+      "fields": {
+       "ledger_guid": {
+        "t": "guid",
+        "req": true,
+        "ref": "ledger"
+       },
+       "side": {
+        "t": "enum",
+        "req": true,
+        "values": [
+         "dr",
+         "cr"
+        ]
+       },
+       "amount": {
+        "t": "money_pos",
+        "req": true
+       },
+       "bills": {
+        "t": "array",
+        "req": false,
+        "min": 0,
+        "max": 20,
+        "item": {
+         "t": "object",
+         "req": false,
+         "fields": {
+          "type": {
+           "t": "enum",
+           "req": true,
+           "values": [
+            "new_ref",
+            "agst_ref",
+            "advance",
+            "on_account"
+           ]
+          },
+          "name": {
+           "t": "str",
+           "req": false,
+           "max": 60,
+           "min": 0
+          },
+          "amount": {
+           "t": "money_pos",
+           "req": true
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "flags": {
+    "_kind": "entries"
+   }
+  },
+  "inventory_voucher": {
+   "allowed_base_kinds": [
+    "delivery_note",
+    "receipt_note",
+    "rejections_in",
+    "rejections_out",
+    "stock_journal"
+   ],
+   "fields": {
+    "voucher_type_guid": {
+     "t": "guid",
+     "req": true,
+     "ref": "voucher_type"
+    },
+    "base_kind": {
+     "t": "str",
+     "req": true,
+     "max": 30,
+     "min": 0
+    },
+    "date": {
+     "t": "date",
+     "req": true
+    },
+    "number": {
+     "t": "str",
+     "req": false,
+     "max": 30,
+     "min": 0
+    },
+    "reference": {
+     "t": "str",
+     "req": false,
+     "max": 60,
+     "min": 0
+    },
+    "reference_date": {
+     "t": "date",
+     "req": false
+    },
+    "narration": {
+     "t": "str",
+     "req": false,
+     "max": 500,
+     "min": 0
+    },
+    "party_ledger_guid": {
+     "t": "guid",
+     "req": false,
+     "ref": "ledger"
+    },
+    "lines": {
+     "t": "array",
+     "req": false,
+     "min": 0,
+     "max": 200,
+     "item": {
+      "t": "object",
+      "req": false,
+      "fields": {
+       "stock_item_guid": {
+        "t": "guid",
+        "req": true,
+        "ref": "stock_item"
+       },
+       "godown_guid": {
+        "t": "guid",
+        "req": false,
+        "ref": "godown"
+       },
+       "batch_name": {
+        "t": "str",
+        "req": false,
+        "max": 60,
+        "min": 0
+       },
+       "qty": {
+        "t": "money_pos",
+        "req": true
+       },
+       "unit": {
+        "t": "str",
+        "req": true,
+        "max": 20,
+        "min": 0
+       },
+       "rate": {
+        "t": "money_pos",
+        "req": false
+       },
+       "amount": {
+        "t": "money",
+        "req": false
+       },
+       "order_no": {
+        "t": "str",
+        "req": false,
+        "max": 30,
+        "min": 0
+       }
+      }
+     }
+    },
+    "source_lines": {
+     "t": "array",
+     "req": false,
+     "min": 0,
+     "max": 100,
+     "item": {
+      "t": "object",
+      "req": false,
+      "fields": {
+       "stock_item_guid": {
+        "t": "guid",
+        "req": true,
+        "ref": "stock_item"
+       },
+       "godown_guid": {
+        "t": "guid",
+        "req": false,
+        "ref": "godown"
+       },
+       "batch_name": {
+        "t": "str",
+        "req": false,
+        "max": 60,
+        "min": 0
+       },
+       "qty": {
+        "t": "money_pos",
+        "req": true
+       },
+       "unit": {
+        "t": "str",
+        "req": true,
+        "max": 20,
+        "min": 0
+       },
+       "rate": {
+        "t": "money_pos",
+        "req": false
+       },
+       "amount": {
+        "t": "money",
+        "req": false
+       },
+       "order_no": {
+        "t": "str",
+        "req": false,
+        "max": 30,
+        "min": 0
+       }
+      }
+     }
+    },
+    "destination_lines": {
+     "t": "array",
+     "req": false,
+     "min": 0,
+     "max": 100,
+     "item": {
+      "t": "object",
+      "req": false,
+      "fields": {
+       "stock_item_guid": {
+        "t": "guid",
+        "req": true,
+        "ref": "stock_item"
+       },
+       "godown_guid": {
+        "t": "guid",
+        "req": false,
+        "ref": "godown"
+       },
+       "batch_name": {
+        "t": "str",
+        "req": false,
+        "max": 60,
+        "min": 0
+       },
+       "qty": {
+        "t": "money_pos",
+        "req": true
+       },
+       "unit": {
+        "t": "str",
+        "req": true,
+        "max": 20,
+        "min": 0
+       },
+       "rate": {
+        "t": "money_pos",
+        "req": false
+       },
+       "amount": {
+        "t": "money",
+        "req": false
+       },
+       "order_no": {
+        "t": "str",
+        "req": false,
+        "max": 30,
+        "min": 0
+       }
+      }
+     }
+    }
+   },
+   "flags": {
+    "_kind": "entries"
+   }
+  },
+  "order": {
+   "allowed_base_kinds": [
+    "sales_order",
+    "purchase_order"
+   ],
+   "fields": {
+    "voucher_type_guid": {
+     "t": "guid",
+     "req": true,
+     "ref": "voucher_type"
+    },
+    "base_kind": {
+     "t": "str",
+     "req": true,
+     "max": 30,
+     "min": 0
+    },
+    "date": {
+     "t": "date",
+     "req": true
+    },
+    "number": {
+     "t": "str",
+     "req": false,
+     "max": 30,
+     "min": 0
+    },
+    "reference": {
+     "t": "str",
+     "req": false,
+     "max": 60,
+     "min": 0
+    },
+    "reference_date": {
+     "t": "date",
+     "req": false
+    },
+    "narration": {
+     "t": "str",
+     "req": false,
+     "max": 500,
+     "min": 0
+    },
+    "party_ledger_guid": {
+     "t": "guid",
+     "req": true,
+     "ref": "ledger"
+    },
+    "lines": {
+     "t": "array",
+     "req": true,
+     "min": 1,
+     "max": 200,
+     "item": {
+      "t": "object",
+      "req": false,
+      "fields": {
+       "stock_item_guid": {
+        "t": "guid",
+        "req": true,
+        "ref": "stock_item"
+       },
+       "godown_guid": {
+        "t": "guid",
+        "req": false,
+        "ref": "godown"
+       },
+       "qty": {
+        "t": "money_pos",
+        "req": true
+       },
+       "unit": {
+        "t": "str",
+        "req": true,
+        "max": 20,
+        "min": 0
+       },
+       "rate": {
+        "t": "money_pos",
+        "req": true
+       },
+       "discount_pct": {
+        "t": "pct",
+        "req": false
+       },
+       "amount": {
+        "t": "money",
+        "req": true
+       },
+       "due_date": {
+        "t": "date",
+        "req": true
+       },
+       "order_no": {
+        "t": "str",
+        "req": false,
+        "max": 30,
+        "min": 0
+       }
+      }
+     }
+    },
+    "valid_till": {
+     "t": "date",
+     "req": false
+    }
+   },
+   "flags": {
+    "_kind": "orders"
+   }
+  },
+  "quotation": {
+   "allowed_base_kinds": [
+    "sales_order"
+   ],
+   "fields": {
+    "voucher_type_guid": {
+     "t": "guid",
+     "req": true,
+     "ref": "voucher_type"
+    },
+    "base_kind": {
+     "t": "str",
+     "req": true,
+     "max": 30,
+     "min": 0
+    },
+    "date": {
+     "t": "date",
+     "req": true
+    },
+    "number": {
+     "t": "str",
+     "req": false,
+     "max": 30,
+     "min": 0
+    },
+    "reference": {
+     "t": "str",
+     "req": false,
+     "max": 60,
+     "min": 0
+    },
+    "reference_date": {
+     "t": "date",
+     "req": false
+    },
+    "narration": {
+     "t": "str",
+     "req": false,
+     "max": 500,
+     "min": 0
+    },
+    "party_ledger_guid": {
+     "t": "guid",
+     "req": true,
+     "ref": "ledger"
+    },
+    "lines": {
+     "t": "array",
+     "req": true,
+     "min": 1,
+     "max": 200,
+     "item": {
+      "t": "object",
+      "req": false,
+      "fields": {
+       "stock_item_guid": {
+        "t": "guid",
+        "req": true,
+        "ref": "stock_item"
+       },
+       "godown_guid": {
+        "t": "guid",
+        "req": false,
+        "ref": "godown"
+       },
+       "qty": {
+        "t": "money_pos",
+        "req": true
+       },
+       "unit": {
+        "t": "str",
+        "req": true,
+        "max": 20,
+        "min": 0
+       },
+       "rate": {
+        "t": "money_pos",
+        "req": true
+       },
+       "discount_pct": {
+        "t": "pct",
+        "req": false
+       },
+       "amount": {
+        "t": "money",
+        "req": true
+       },
+       "due_date": {
+        "t": "date",
+        "req": true
+       },
+       "order_no": {
+        "t": "str",
+        "req": false,
+        "max": 30,
+        "min": 0
+       }
+      }
+     }
+    },
+    "valid_till": {
+     "t": "date",
+     "req": false
+    }
+   },
+   "flags": {
+    "_kind": "orders"
+   }
+  },
+  "ledger": {
+   "allowed_base_kinds": [],
+   "fields": {
+    "name": {
+     "t": "str",
+     "req": true,
+     "max": 100,
+     "min": 1
+    },
+    "parent_group_guid": {
+     "t": "guid",
+     "req": true,
+     "ref": "group"
+    },
+    "opening_balance": {
+     "t": "object",
+     "req": false,
+     "fields": {
+      "amount": {
+       "t": "money_pos",
+       "req": true
+      },
+      "side": {
+       "t": "enum",
+       "req": true,
+       "values": [
+        "dr",
+        "cr"
+       ]
+      }
+     }
+    },
+    "gstin": {
+     "t": "str",
+     "req": false,
+     "max": 15,
+     "min": 0
+    },
+    "gst_registration_type": {
+     "t": "enum",
+     "req": false,
+     "values": [
+      "regular",
+      "composition",
+      "unregistered",
+      "consumer",
+      "overseas",
+      "sez"
+     ]
+    },
+    "state_name": {
+     "t": "str",
+     "req": false,
+     "max": 40,
+     "min": 0
+    },
+    "address": {
+     "t": "array",
+     "req": false,
+     "min": 0,
+     "max": 4,
+     "item": {
+      "t": "str",
+      "req": false,
+      "max": 100,
+      "min": 0
+     }
+    },
+    "pincode": {
+     "t": "str",
+     "req": false,
+     "max": 10,
+     "min": 0
+    },
+    "phone": {
+     "t": "str",
+     "req": false,
+     "max": 20,
+     "min": 0
+    },
+    "mobile": {
+     "t": "str",
+     "req": false,
+     "max": 20,
+     "min": 0
+    },
+    "email": {
+     "t": "str",
+     "req": false,
+     "max": 100,
+     "min": 0
+    },
+    "contact_person": {
+     "t": "str",
+     "req": false,
+     "max": 60,
+     "min": 0
+    },
+    "credit_period_days": {
+     "t": "int",
+     "req": false,
+     "min": 0,
+     "max": 365
+    },
+    "credit_limit": {
+     "t": "money_pos",
+     "req": false
+    },
+    "is_billwise": {
+     "t": "bool",
+     "req": false
+    },
+    "pan": {
+     "t": "str",
+     "req": false,
+     "max": 10,
+     "min": 0
+    },
+    "alias": {
+     "t": "str",
+     "req": false,
+     "max": 100,
+     "min": 0
+    },
+    "bank": {
+     "t": "object",
+     "req": false,
+     "fields": {
+      "bank_name": {
+       "t": "str",
+       "req": false,
+       "max": 60,
+       "min": 0
+      },
+      "account_no": {
+       "t": "str",
+       "req": false,
+       "max": 30,
+       "min": 0
+      },
+      "ifsc": {
+       "t": "str",
+       "req": false,
+       "max": 15,
+       "min": 0
+      },
+      "branch": {
+       "t": "str",
+       "req": false,
+       "max": 60,
+       "min": 0
+      },
+      "holder": {
+       "t": "str",
+       "req": false,
+       "max": 60,
+       "min": 0
+      }
+     }
+    }
+   },
+   "flags": {
+    "_kind": "entries"
+   }
+  },
+  "stock_item": {
+   "allowed_base_kinds": [],
+   "fields": {
+    "name": {
+     "t": "str",
+     "req": true,
+     "max": 100,
+     "min": 1
+    },
+    "parent_stock_group_guid": {
+     "t": "guid",
+     "req": false,
+     "ref": "stock_group"
+    },
+    "unit_guid": {
+     "t": "guid",
+     "req": true,
+     "ref": "unit"
+    },
+    "hsn": {
+     "t": "str",
+     "req": false,
+     "max": 12,
+     "min": 0
+    },
+    "gst_rate": {
+     "t": "pct",
+     "req": false
+    },
+    "gst_taxability": {
+     "t": "enum",
+     "req": false,
+     "values": [
+      "taxable",
+      "exempt",
+      "nil_rated",
+      "non_gst"
+     ]
+    },
+    "opening": {
+     "t": "object",
+     "req": false,
+     "fields": {
+      "godown_guid": {
+       "t": "guid",
+       "req": true,
+       "ref": "godown"
+      },
+      "batch_name": {
+       "t": "str",
+       "req": false,
+       "max": 60,
+       "min": 0
+      },
+      "qty": {
+       "t": "money_pos",
+       "req": true
+      },
+      "rate": {
+       "t": "money_pos",
+       "req": true
+      }
+     }
+    },
+    "is_batch_wise": {
+     "t": "bool",
+     "req": false
+    },
+    "description": {
+     "t": "str",
+     "req": false,
+     "max": 200,
+     "min": 0
+    },
+    "reorder_level": {
+     "t": "money_pos",
+     "req": false
+    },
+    "part_no": {
+     "t": "str",
+     "req": false,
+     "max": 30,
+     "min": 0
+    },
+    "alias": {
+     "t": "str",
+     "req": false,
+     "max": 100,
+     "min": 0
+    }
+   },
+   "flags": {
+    "_kind": "entries"
+   }
+  },
+  "alter": {
+   "allowed_base_kinds": [],
+   "fields": {
+    "target_voucher_guid": {
+     "t": "guid",
+     "req": true,
+     "ref": "voucher"
+    },
+    "expected_alter_id": {
+     "t": "int",
+     "req": true,
+     "min": 0,
+     "max": null
+    },
+    "action": {
+     "t": "enum",
+     "req": true,
+     "values": [
+      "replace",
+      "einvoice_generate",
+      "einvoice_cancel",
+      "eway_generate",
+      "eway_cancel"
+     ]
+    },
+    "target_kind": {
+     "t": "enum",
+     "req": false,
+     "values": [
+      "invoice",
+      "receipt",
+      "payment",
+      "contra",
+      "journal",
+      "inventory_voucher",
+      "order"
+     ]
+    },
+    "replacement": {
+     "t": "any",
+     "req": false
+    },
+    "reason": {
+     "t": "enum",
+     "req": false,
+     "values": [
+      "duplicate",
+      "data_entry_mistake",
+      "order_cancelled",
+      "others"
+     ]
+    },
+    "remarks": {
+     "t": "str",
+     "req": false,
+     "max": 100,
+     "min": 0
+    },
+    "eway": {
+     "t": "object",
+     "req": false,
+     "fields": {
+      "transporter_id": {
+       "t": "str",
+       "req": false,
+       "max": 20,
+       "min": 0
+      },
+      "vehicle_no": {
+       "t": "str",
+       "req": false,
+       "max": 15,
+       "min": 0
+      },
+      "distance_km": {
+       "t": "int",
+       "req": false,
+       "min": 0,
+       "max": 4000
+      },
+      "mode": {
+       "t": "enum",
+       "req": false,
+       "values": [
+        "road",
+        "rail",
+        "air",
+        "ship"
+       ]
+      }
+     }
+    }
+   },
+   "flags": {
+    "_kind": "entries"
+   }
+  },
+  "cancel": {
+   "allowed_base_kinds": [],
+   "fields": {
+    "target_voucher_guid": {
+     "t": "guid",
+     "req": true,
+     "ref": "voucher"
+    },
+    "expected_alter_id": {
+     "t": "int",
+     "req": false,
+     "min": 0,
+     "max": null
+    },
+    "reason": {
+     "t": "str",
+     "req": false,
+     "max": 200,
+     "min": 0
+    }
+   },
+   "flags": {
+    "_kind": "entries"
+   }
+  },
+  "delete": {
+   "allowed_base_kinds": [],
+   "fields": {
+    "target_voucher_guid": {
+     "t": "guid",
+     "req": true,
+     "ref": "voucher"
+    },
+    "expected_alter_id": {
+     "t": "int",
+     "req": false,
+     "min": 0,
+     "max": null
+    }
+   },
+   "flags": {
+    "_kind": "entries"
+   }
+  }
+ },
+ "semantic_checks": [
+  {
+   "id": "S01",
+   "detail": "COMPANY_MISMATCH",
+   "rule": "envelope.company_guid must be the company the connector is bound to (tm_company.guid)"
+  },
+  {
+   "id": "S02",
+   "detail": "DATE_OUT_OF_PERIOD",
+   "rule": "voucher date must lie in [tm_company.starting_from, tm_company.ending_at]"
+  },
+  {
+   "id": "S03",
+   "detail": "VOUCHER_TYPE_MISMATCH",
+   "rule": "data.base_kind must equal tm_voucher_type.base_kind of voucher_type_guid and be in the kind allowed_base_kinds; quotation requires voucher_type_guid = app_settings.quotation_voucher_type_guid"
+  },
+  {
+   "id": "S04",
+   "detail": "TOTAL_MISMATCH",
+   "rule": "each invoice line amount = round2(qty*rate*(1-discount_pct/100)); total = sum(line amounts)+sum(charges)+sum(tax line amounts)+round_off.amount; abs(round_off.amount) < 1"
+  },
+  {
+   "id": "S05",
+   "detail": "TAX_MISMATCH",
+   "rule": "tax.mode = intra when place_of_supply equals the company state else inter (none only for unregistered-composition setups); each head amount = round2(sum over lines of round4(taxable*head_rate/100)) with head rates per CALC_SPECS section 5"
+  },
+  {
+   "id": "S06",
+   "detail": "TAX_MISMATCH",
+   "rule": "line gst_rate must equal the stock item master total GST rate (tm_stock_item_gst latest applicable_from <= date); charges use their own gst_rate"
+  },
+  {
+   "id": "S07",
+   "detail": "UNBALANCED",
+   "rule": "bills amounts sum to the party amount (invoice total, receipt/payment amount); journal sum(dr) = sum(cr); contra from != to"
+  },
+  {
+   "id": "S08",
+   "detail": "PAYLOAD_INVALID",
+   "rule": "party ledger not bill-wise (tm_ledger.is_billwise_on = false) => bills must be absent; receipt/payment bills[].type new_ref/agst_ref/advance/on_account allowed"
+  },
+  {
+   "id": "S09",
+   "detail": "LEDGER_NOT_FOUND",
+   "rule": "every *_guid reference must exist in the synced tables; detail by kind: ledger=LEDGER_NOT_FOUND, stock_item=STOCK_ITEM_NOT_FOUND, godown=GODOWN_NOT_FOUND, voucher_type=VOUCHER_TYPE_NOT_FOUND, voucher=TARGET_NOT_FOUND, group/unit/stock_group=MASTER_NOT_FOUND"
+  },
+  {
+   "id": "S10",
+   "detail": "PAYLOAD_INVALID",
+   "rule": "inventory_voucher: stock_journal uses source_lines + destination_lines (no lines, no party); notes use lines + party_ledger_guid"
+  },
+  {
+   "id": "S11",
+   "detail": "PAYLOAD_INVALID",
+   "rule": "alter: action replace requires target_kind + replacement; einvoice_cancel requires reason; eway_generate requires eway.transporter_id or eway.vehicle_no"
+  }
+ ],
+ "result": {
+  "shape": {
+   "ok": "bool",
+   "guid": "string?",
+   "voucher_number": "string?",
+   "alter_id": "int?",
+   "message": "string?",
+   "tally_raw": "string?",
+   "code": "LB_* code when ok=false",
+   "detail": "detail code when ok=false",
+   "retryable": "bool?"
+  },
+  "details": {
+   "PAYLOAD_INVALID": {
+    "code": "LB_TALLY_REJECTED",
+    "status": "failed",
+    "retryable": false
+   },
+   "UNSUPPORTED_VERSION": {
+    "code": "LB_CONTRACT_TOO_OLD",
+    "status": "failed",
+    "retryable": false
+   },
+   "COMPANY_MISMATCH": {
+    "code": "LB_TALLY_REJECTED",
+    "status": "failed",
+    "retryable": false
+   },
+   "TOTAL_MISMATCH": {
+    "code": "LB_TALLY_REJECTED",
+    "status": "failed",
+    "retryable": false
+   },
+   "TAX_MISMATCH": {
+    "code": "LB_TALLY_REJECTED",
+    "status": "failed",
+    "retryable": false
+   },
+   "UNBALANCED": {
+    "code": "LB_TALLY_REJECTED",
+    "status": "failed",
+    "retryable": false
+   },
+   "LEDGER_NOT_FOUND": {
+    "code": "LB_TALLY_REJECTED",
+    "status": "failed",
+    "retryable": false
+   },
+   "STOCK_ITEM_NOT_FOUND": {
+    "code": "LB_TALLY_REJECTED",
+    "status": "failed",
+    "retryable": false
+   },
+   "GODOWN_NOT_FOUND": {
+    "code": "LB_TALLY_REJECTED",
+    "status": "failed",
+    "retryable": false
+   },
+   "VOUCHER_TYPE_NOT_FOUND": {
+    "code": "LB_TALLY_REJECTED",
+    "status": "failed",
+    "retryable": false
+   },
+   "VOUCHER_TYPE_MISMATCH": {
+    "code": "LB_TALLY_REJECTED",
+    "status": "failed",
+    "retryable": false
+   },
+   "VOUCHER_NUMBER_EXISTS": {
+    "code": "LB_TALLY_REJECTED",
+    "status": "failed",
+    "retryable": false
+   },
+   "DATE_OUT_OF_PERIOD": {
+    "code": "LB_TALLY_REJECTED",
+    "status": "failed",
+    "retryable": false
+   },
+   "NEGATIVE_STOCK": {
+    "code": "LB_TALLY_REJECTED",
+    "status": "failed",
+    "retryable": false
+   },
+   "BILL_REF_NOT_FOUND": {
+    "code": "LB_TALLY_REJECTED",
+    "status": "failed",
+    "retryable": false
+   },
+   "MASTER_EXISTS": {
+    "code": "LB_ENTRY_DUPLICATE",
+    "status": "failed",
+    "retryable": false
+   },
+   "MASTER_NOT_FOUND": {
+    "code": "LB_TALLY_REJECTED",
+    "status": "failed",
+    "retryable": false
+   },
+   "TARGET_NOT_FOUND": {
+    "code": "LB_TALLY_REJECTED",
+    "status": "failed",
+    "retryable": false
+   },
+   "ALTER_CONFLICT": {
+    "code": "LB_ENTRY_NEEDS_REVIEW",
+    "status": "needs_review",
+    "retryable": false
+   },
+   "EINVOICE_REJECTED": {
+    "code": "LB_TALLY_REJECTED",
+    "status": "failed",
+    "retryable": false
+   },
+   "TALLY_COMPANY_NOT_LOADED": {
+    "code": "LB_TALLY_UNREACHABLE",
+    "status": "queued",
+    "retryable": true
+   },
+   "TALLY_UNREACHABLE": {
+    "code": "LB_TALLY_UNREACHABLE",
+    "status": "queued",
+    "retryable": true
+   },
+   "FLAG_DISABLED": {
+    "code": "LB_FLAG_DISABLED",
+    "status": "failed",
+    "retryable": false
+   },
+   "DEVICE_REVOKED": {
+    "code": "LB_DEVICE_REVOKED",
+    "status": "failed",
+    "retryable": false
+   },
+   "DUPLICATE_CLIENT_REQUEST": {
+    "code": "LB_ENTRY_DUPLICATE",
+    "status": "posted",
+    "retryable": false
+   },
+   "AMBIGUOUS_RESULT": {
+    "code": "LB_ENTRY_NEEDS_REVIEW",
+    "status": "needs_review",
+    "retryable": false
+   },
+   "UNKNOWN": {
+    "code": "LB_TALLY_REJECTED",
+    "status": "failed",
+    "retryable": false
+   }
+  },
+  "tally_message_map": [
+   {
+    "match": "(?i)ledger '?(.+?)'? (does not exist|not found)",
+    "detail": "LEDGER_NOT_FOUND"
+   },
+   {
+    "match": "(?i)stock item '?(.+?)'? (does not exist|not found)",
+    "detail": "STOCK_ITEM_NOT_FOUND"
+   },
+   {
+    "match": "(?i)godown '?(.+?)'? (does not exist|not found)",
+    "detail": "GODOWN_NOT_FOUND"
+   },
+   {
+    "match": "(?i)voucher type '?(.+?)'? (does not exist|not found)",
+    "detail": "VOUCHER_TYPE_NOT_FOUND"
+   },
+   {
+    "match": "(?i)(voucher number|number) .* already (exists|used)|duplicate voucher number",
+    "detail": "VOUCHER_NUMBER_EXISTS"
+   },
+   {
+    "match": "(?i)date .*(out of|outside).*(financial|books)|date is out of range",
+    "detail": "DATE_OUT_OF_PERIOD"
+   },
+   {
+    "match": "(?i)debit and credit .*(do not|don't) (match|tally)|difference in",
+    "detail": "UNBALANCED"
+   },
+   {
+    "match": "(?i)negative (stock|closing)",
+    "detail": "NEGATIVE_STOCK"
+   },
+   {
+    "match": "(?i)(bill|reference) .*(not found|does not exist)",
+    "detail": "BILL_REF_NOT_FOUND"
+   },
+   {
+    "match": "(?i)(already exists|duplicate name)",
+    "detail": "MASTER_EXISTS"
+   },
+   {
+    "match": "(?i)(company .*not (loaded|open)|no company)",
+    "detail": "TALLY_COMPANY_NOT_LOADED"
+   },
+   {
+    "match": "(?i)(irn|e-?invoice|e-?way)",
+    "detail": "EINVOICE_REJECTED"
+   }
+  ],
+  "note": "All Tally message patterns are assumed: verify on a real Tally and extend the list; unmatched messages map to UNKNOWN with the raw text in tally_raw."
+ }
+}

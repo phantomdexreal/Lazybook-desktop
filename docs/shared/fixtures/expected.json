@@ -1,0 +1,1067 @@
+{
+ "as_of": "2026-09-30",
+ "ageing_buckets": [
+  "0-30",
+  "31-60",
+  "61-90",
+  "91+"
+ ],
+ "quotation_voucher_type_names": [
+  "Sales Quotation"
+ ],
+ "currency_decimals": 2,
+ "trial_balance": {
+  "rows": [
+   {
+    "ledger": "Alpha Retail",
+    "group": "Key Customers",
+    "closing": "-20980.00",
+    "dr": "20980.00",
+    "cr": "0.00"
+   },
+   {
+    "ledger": "Beta Stores",
+    "group": "Sundry Debtors",
+    "closing": "-17352.00",
+    "dr": "17352.00",
+    "cr": "0.00"
+   },
+   {
+    "ledger": "Cash",
+    "group": "Cash-in-Hand",
+    "closing": "-36420.00",
+    "dr": "36420.00",
+    "cr": "0.00"
+   },
+   {
+    "ledger": "Gamma Enterprises",
+    "group": "Sundry Debtors",
+    "closing": "-9030.50",
+    "dr": "9030.50",
+    "cr": "0.00"
+   },
+   {
+    "ledger": "HDFC Bank",
+    "group": "Bank Accounts",
+    "closing": "-62567.00",
+    "dr": "62567.00",
+    "cr": "0.00"
+   },
+   {
+    "ledger": "Input CGST",
+    "group": "Duties & Taxes",
+    "closing": "-3486.15",
+    "dr": "3486.15",
+    "cr": "0.00"
+   },
+   {
+    "ledger": "Input IGST",
+    "group": "Duties & Taxes",
+    "closing": "-3137.40",
+    "dr": "3137.40",
+    "cr": "0.00"
+   },
+   {
+    "ledger": "Input SGST",
+    "group": "Duties & Taxes",
+    "closing": "-3486.15",
+    "dr": "3486.15",
+    "cr": "0.00"
+   },
+   {
+    "ledger": "Omega Supplies",
+    "group": "Suppliers",
+    "closing": "25921.00",
+    "dr": "0.00",
+    "cr": "25921.00"
+   },
+   {
+    "ledger": "Output CGST",
+    "group": "Duties & Taxes",
+    "closing": "2740.20",
+    "dr": "0.00",
+    "cr": "2740.20"
+   },
+   {
+    "ledger": "Output IGST",
+    "group": "Duties & Taxes",
+    "closing": "3499.60",
+    "dr": "0.00",
+    "cr": "3499.60"
+   },
+   {
+    "ledger": "Output SGST",
+    "group": "Duties & Taxes",
+    "closing": "2740.20",
+    "dr": "0.00",
+    "cr": "2740.20"
+   },
+   {
+    "ledger": "Owner Capital",
+    "group": "Capital Account",
+    "closing": "192300.00",
+    "dr": "0.00",
+    "cr": "192300.00"
+   },
+   {
+    "ledger": "Purchases",
+    "group": "Purchase Accounts",
+    "closing": "-70405.00",
+    "dr": "70405.00",
+    "cr": "0.00"
+   },
+   {
+    "ledger": "Rent",
+    "group": "Indirect Expenses",
+    "closing": "-41000.00",
+    "dr": "41000.00",
+    "cr": "0.00"
+   },
+   {
+    "ledger": "Round Off",
+    "group": "Indirect Expenses",
+    "closing": "0.70",
+    "dr": "0.00",
+    "cr": "0.70"
+   },
+   {
+    "ledger": "Salaries",
+    "group": "Indirect Expenses",
+    "closing": "-30000.00",
+    "dr": "30000.00",
+    "cr": "0.00"
+   },
+   {
+    "ledger": "Sales",
+    "group": "Sales Accounts",
+    "closing": "61680.00",
+    "dr": "0.00",
+    "cr": "61680.00"
+   },
+   {
+    "ledger": "Zeta Wholesale",
+    "group": "Suppliers",
+    "closing": "26282.50",
+    "dr": "0.00",
+    "cr": "26282.50"
+   }
+  ],
+  "stock_in_hand_opening_dr": "17300.00",
+  "total_dr": "315164.20",
+  "total_cr": "315164.20",
+  "balanced": true
+ },
+ "profit_and_loss": {
+  "sales": "61680.00",
+  "purchases": "70405.00",
+  "opening_stock": "17300.00",
+  "closing_stock": "51611.44",
+  "gross_profit": "25586.44",
+  "indirect_expenses": "70999.30",
+  "net_profit": "-45412.86"
+ },
+ "balance_sheet": {
+  "liabilities": {
+   "Capital Account": "192300.00",
+   "Current Liabilities": "51073.80"
+  },
+  "net_profit": "-45412.86",
+  "liabilities_total": "197960.94",
+  "assets": {
+   "Current Assets": "146349.50"
+  },
+  "closing_stock": "51611.44",
+  "assets_total": "197960.94",
+  "balanced": true
+ },
+ "outstanding": {
+  "by_party": [
+   {
+    "ledger": "Alpha Retail",
+    "kind": "receivable",
+    "net_outstanding": "20980.00",
+    "on_account": "0.00",
+    "buckets": {
+     "0-30": "4333.00",
+     "31-60": "7532.00",
+     "61-90": "0.00",
+     "91+": "9115.00"
+    },
+    "bills": [
+     {
+      "bill": "TI-001",
+      "bill_date": "2026-04-05",
+      "due_date": "2026-05-05",
+      "outstanding": "1064.00",
+      "age_days": 178,
+      "overdue_days": 148,
+      "bucket": "91+"
+     },
+     {
+      "bill": "TI-004",
+      "bill_date": "2026-05-10",
+      "due_date": "2026-06-09",
+      "outstanding": "2510.00",
+      "age_days": 143,
+      "overdue_days": 113,
+      "bucket": "91+"
+     },
+     {
+      "bill": "TI-007",
+      "bill_date": "2026-06-18",
+      "due_date": "2026-07-18",
+      "outstanding": "5541.00",
+      "age_days": 104,
+      "overdue_days": 74,
+      "bucket": "91+"
+     },
+     {
+      "bill": "TI-010",
+      "bill_date": "2026-08-05",
+      "due_date": "2026-09-04",
+      "outstanding": "7532.00",
+      "age_days": 56,
+      "overdue_days": 26,
+      "bucket": "31-60"
+     },
+     {
+      "bill": "S-002",
+      "bill_date": "2026-09-25",
+      "due_date": "2026-10-25",
+      "outstanding": "4333.00",
+      "age_days": 5,
+      "overdue_days": 0,
+      "bucket": "0-30"
+     }
+    ]
+   },
+   {
+    "ledger": "Beta Stores",
+    "kind": "receivable",
+    "net_outstanding": "17352.00",
+    "on_account": "0.00",
+    "buckets": {
+     "0-30": "0.00",
+     "31-60": "8614.00",
+     "61-90": "2688.00",
+     "91+": "6050.00"
+    },
+    "bills": [
+     {
+      "bill": "TI-005",
+      "bill_date": "2026-05-22",
+      "due_date": "2026-07-06",
+      "outstanding": "6050.00",
+      "age_days": 131,
+      "overdue_days": 86,
+      "bucket": "91+"
+     },
+     {
+      "bill": "TI-008",
+      "bill_date": "2026-07-02",
+      "due_date": "2026-08-16",
+      "outstanding": "2688.00",
+      "age_days": 90,
+      "overdue_days": 45,
+      "bucket": "61-90"
+     },
+     {
+      "bill": "TI-011",
+      "bill_date": "2026-08-28",
+      "due_date": "2026-10-12",
+      "outstanding": "8614.00",
+      "age_days": 33,
+      "overdue_days": 0,
+      "bucket": "31-60"
+     }
+    ]
+   },
+   {
+    "ledger": "Gamma Enterprises",
+    "kind": "receivable",
+    "net_outstanding": "9030.50",
+    "on_account": "-3000.00",
+    "buckets": {
+     "0-30": "4872.00",
+     "31-60": "0.00",
+     "61-90": "4184.00",
+     "91+": "2974.50"
+    },
+    "bills": [
+     {
+      "bill": "TI-006",
+      "bill_date": "2026-06-03",
+      "due_date": "2026-06-18",
+      "outstanding": "2974.50",
+      "age_days": 119,
+      "overdue_days": 104,
+      "bucket": "91+"
+     },
+     {
+      "bill": "TI-009",
+      "bill_date": "2026-07-20",
+      "due_date": "2026-08-04",
+      "outstanding": "4184.00",
+      "age_days": 72,
+      "overdue_days": 57,
+      "bucket": "61-90"
+     },
+     {
+      "bill": "S-001",
+      "bill_date": "2026-09-12",
+      "due_date": "2026-09-27",
+      "outstanding": "4872.00",
+      "age_days": 18,
+      "overdue_days": 3,
+      "bucket": "0-30"
+     }
+    ]
+   },
+   {
+    "ledger": "Omega Supplies",
+    "kind": "payable",
+    "net_outstanding": "25921.00",
+    "on_account": "-2000.00",
+    "buckets": {
+     "0-30": "5000.00",
+     "31-60": "7458.00",
+     "61-90": "5664.00",
+     "91+": "19799.00"
+    },
+    "bills": [
+     {
+      "bill": "SUP-1002",
+      "bill_date": "2026-04-20",
+      "due_date": "2026-05-20",
+      "outstanding": "10224.00",
+      "age_days": 163,
+      "overdue_days": 133,
+      "bucket": "91+"
+     },
+     {
+      "bill": "SUP-1010",
+      "bill_date": "2026-05-08",
+      "due_date": "2026-06-07",
+      "outstanding": "9575.00",
+      "age_days": 145,
+      "overdue_days": 115,
+      "bucket": "91+"
+     },
+     {
+      "bill": "ADV-OMG-1",
+      "bill_date": "2026-06-25",
+      "due_date": "2026-07-25",
+      "outstanding": "-10000.00",
+      "age_days": 97,
+      "overdue_days": 0,
+      "bucket": "advance"
+     },
+     {
+      "bill": "SUP-1031",
+      "bill_date": "2026-07-15",
+      "due_date": "2026-08-14",
+      "outstanding": "5664.00",
+      "age_days": 77,
+      "overdue_days": 47,
+      "bucket": "61-90"
+     },
+     {
+      "bill": "SUP-1050",
+      "bill_date": "2026-08-20",
+      "due_date": "2026-09-19",
+      "outstanding": "7458.00",
+      "age_days": 41,
+      "overdue_days": 11,
+      "bucket": "31-60"
+     },
+     {
+      "bill": "RENT-SEP",
+      "bill_date": "2026-09-30",
+      "due_date": "2026-10-30",
+      "outstanding": "5000.00",
+      "age_days": 0,
+      "overdue_days": 0,
+      "bucket": "0-30"
+     }
+    ]
+   },
+   {
+    "ledger": "Zeta Wholesale",
+    "kind": "payable",
+    "net_outstanding": "26282.50",
+    "on_account": "0.00",
+    "buckets": {
+     "0-30": "7280.00",
+     "31-60": "0.00",
+     "61-90": "0.00",
+     "91+": "19002.50"
+    },
+    "bills": [
+     {
+      "bill": "ZW-501",
+      "bill_date": "2026-04-10",
+      "due_date": "2026-05-25",
+      "outstanding": "6324.50",
+      "age_days": 173,
+      "overdue_days": 128,
+      "bucket": "91+"
+     },
+     {
+      "bill": "ZW-519",
+      "bill_date": "2026-06-12",
+      "due_date": "2026-07-27",
+      "outstanding": "12678.00",
+      "age_days": 110,
+      "overdue_days": 65,
+      "bucket": "91+"
+     },
+     {
+      "bill": "ZW-540",
+      "bill_date": "2026-09-10",
+      "due_date": "2026-10-25",
+      "outstanding": "7280.00",
+      "age_days": 20,
+      "overdue_days": 0,
+      "bucket": "0-30"
+     }
+    ]
+   }
+  ],
+  "ageing_totals_owed": {
+   "0-30": "21485.00",
+   "31-60": "23604.00",
+   "61-90": "12536.00",
+   "91+": "56941.00"
+  }
+ },
+ "invoice_payment_status": [
+  {
+   "voucher": "P-001",
+   "kind": "purchase",
+   "party": "Omega Supplies",
+   "total": "14986.00",
+   "paid": "14986.00",
+   "outstanding": "0.00",
+   "status": "paid",
+   "due_date": "2026-05-02",
+   "overdue": false,
+   "display_status": "paid"
+  },
+  {
+   "voucher": "P-002",
+   "kind": "purchase",
+   "party": "Zeta Wholesale",
+   "total": "12649.00",
+   "paid": "6324.50",
+   "outstanding": "6324.50",
+   "status": "partly",
+   "due_date": "2026-05-25",
+   "overdue": true,
+   "display_status": "overdue"
+  },
+  {
+   "voucher": "P-003",
+   "kind": "purchase",
+   "party": "Omega Supplies",
+   "total": "10224.00",
+   "paid": "0.00",
+   "outstanding": "10224.00",
+   "status": "unpaid",
+   "due_date": "2026-05-20",
+   "overdue": true,
+   "display_status": "overdue"
+  },
+  {
+   "voucher": "P-004",
+   "kind": "purchase",
+   "party": "Omega Supplies",
+   "total": "10490.00",
+   "paid": "915.00",
+   "outstanding": "9575.00",
+   "status": "partly",
+   "due_date": "2026-06-07",
+   "overdue": true,
+   "display_status": "overdue"
+  },
+  {
+   "voucher": "P-005",
+   "kind": "purchase",
+   "party": "Zeta Wholesale",
+   "total": "12678.00",
+   "paid": "0.00",
+   "outstanding": "12678.00",
+   "status": "unpaid",
+   "due_date": "2026-07-27",
+   "overdue": true,
+   "display_status": "overdue"
+  },
+  {
+   "voucher": "P-006",
+   "kind": "purchase",
+   "party": "Omega Supplies",
+   "total": "5664.00",
+   "paid": "0.00",
+   "outstanding": "5664.00",
+   "status": "unpaid",
+   "due_date": "2026-08-14",
+   "overdue": true,
+   "display_status": "overdue"
+  },
+  {
+   "voucher": "P-007",
+   "kind": "purchase",
+   "party": "Omega Supplies",
+   "total": "7458.00",
+   "paid": "0.00",
+   "outstanding": "7458.00",
+   "status": "unpaid",
+   "due_date": "2026-09-19",
+   "overdue": true,
+   "display_status": "overdue"
+  },
+  {
+   "voucher": "P-008",
+   "kind": "purchase",
+   "party": "Zeta Wholesale",
+   "total": "7280.00",
+   "paid": "0.00",
+   "outstanding": "7280.00",
+   "status": "unpaid",
+   "due_date": "2026-10-25",
+   "overdue": false,
+   "display_status": "unpaid"
+  },
+  {
+   "voucher": "S-001",
+   "kind": "sales",
+   "party": "Gamma Enterprises",
+   "total": "4872.00",
+   "paid": "0.00",
+   "outstanding": "4872.00",
+   "status": "unpaid",
+   "due_date": "2026-09-27",
+   "overdue": true,
+   "display_status": "overdue"
+  },
+  {
+   "voucher": "S-002",
+   "kind": "sales",
+   "party": "Alpha Retail",
+   "total": "4333.00",
+   "paid": "0.00",
+   "outstanding": "4333.00",
+   "status": "unpaid",
+   "due_date": "2026-10-25",
+   "overdue": false,
+   "display_status": "unpaid"
+  },
+  {
+   "voucher": "TI-001",
+   "kind": "sales",
+   "party": "Alpha Retail",
+   "total": "2064.00",
+   "paid": "1000.00",
+   "outstanding": "1064.00",
+   "status": "partly",
+   "due_date": "2026-05-05",
+   "overdue": true,
+   "display_status": "overdue"
+  },
+  {
+   "voucher": "TI-002",
+   "kind": "sales",
+   "party": "Beta Stores",
+   "total": "2903.00",
+   "paid": "2903.00",
+   "outstanding": "0.00",
+   "status": "paid",
+   "due_date": "2026-05-27",
+   "overdue": false,
+   "display_status": "paid"
+  },
+  {
+   "voucher": "TI-003",
+   "kind": "sales",
+   "party": "Gamma Enterprises",
+   "total": "5420.00",
+   "paid": "5420.00",
+   "outstanding": "0.00",
+   "status": "paid",
+   "due_date": "2026-05-10",
+   "overdue": false,
+   "display_status": "paid"
+  },
+  {
+   "voucher": "TI-004",
+   "kind": "sales",
+   "party": "Alpha Retail",
+   "total": "5994.00",
+   "paid": "3484.00",
+   "outstanding": "2510.00",
+   "status": "partly",
+   "due_date": "2026-06-09",
+   "overdue": true,
+   "display_status": "overdue"
+  },
+  {
+   "voucher": "TI-005",
+   "kind": "sales",
+   "party": "Beta Stores",
+   "total": "6050.00",
+   "paid": "0.00",
+   "outstanding": "6050.00",
+   "status": "unpaid",
+   "due_date": "2026-07-06",
+   "overdue": true,
+   "display_status": "overdue"
+  },
+  {
+   "voucher": "TI-006",
+   "kind": "sales",
+   "party": "Gamma Enterprises",
+   "total": "5949.00",
+   "paid": "2974.50",
+   "outstanding": "2974.50",
+   "status": "partly",
+   "due_date": "2026-06-18",
+   "overdue": true,
+   "display_status": "overdue"
+  },
+  {
+   "voucher": "TI-007",
+   "kind": "sales",
+   "party": "Alpha Retail",
+   "total": "5541.00",
+   "paid": "0.00",
+   "outstanding": "5541.00",
+   "status": "unpaid",
+   "due_date": "2026-07-18",
+   "overdue": true,
+   "display_status": "overdue"
+  },
+  {
+   "voucher": "TI-008",
+   "kind": "sales",
+   "party": "Beta Stores",
+   "total": "7688.00",
+   "paid": "5000.00",
+   "outstanding": "2688.00",
+   "status": "partly",
+   "due_date": "2026-08-16",
+   "overdue": true,
+   "display_status": "overdue"
+  },
+  {
+   "voucher": "TI-009",
+   "kind": "sales",
+   "party": "Gamma Enterprises",
+   "total": "4184.00",
+   "paid": "0.00",
+   "outstanding": "4184.00",
+   "status": "unpaid",
+   "due_date": "2026-08-04",
+   "overdue": true,
+   "display_status": "overdue"
+  },
+  {
+   "voucher": "TI-010",
+   "kind": "sales",
+   "party": "Alpha Retail",
+   "total": "7532.00",
+   "paid": "0.00",
+   "outstanding": "7532.00",
+   "status": "unpaid",
+   "due_date": "2026-09-04",
+   "overdue": true,
+   "display_status": "overdue"
+  },
+  {
+   "voucher": "TI-011",
+   "kind": "sales",
+   "party": "Beta Stores",
+   "total": "8614.00",
+   "paid": "0.00",
+   "outstanding": "8614.00",
+   "status": "unpaid",
+   "due_date": "2026-10-12",
+   "overdue": false,
+   "display_status": "unpaid"
+  }
+ ],
+ "customer_last_sale": [
+  {
+   "ledger": "Alpha Retail",
+   "last_sale_date": "2026-09-25",
+   "voucher": "S-002",
+   "amount": "4333.00"
+  },
+  {
+   "ledger": "Beta Stores",
+   "last_sale_date": "2026-08-28",
+   "voucher": "TI-011",
+   "amount": "8614.00"
+  },
+  {
+   "ledger": "Gamma Enterprises",
+   "last_sale_date": "2026-09-12",
+   "voucher": "S-001",
+   "amount": "4872.00"
+  }
+ ],
+ "stock_closing": [
+  {
+   "item": "Bolt Pack",
+   "unit": "Nos",
+   "closing_qty": "165.00",
+   "closing_value": "4090.10",
+   "locations": [
+    {
+     "godown": "Main Location",
+     "batch": "Primary Batch",
+     "qty": "140.00"
+    },
+    {
+     "godown": "Warehouse 2",
+     "batch": "Primary Batch",
+     "qty": "25.00"
+    }
+   ]
+  },
+  {
+   "item": "Gadget C",
+   "unit": "Nos",
+   "closing_qty": "60.00",
+   "closing_value": "9316.00",
+   "locations": [
+    {
+     "godown": "Main Location",
+     "batch": "Primary Batch",
+     "qty": "60.00"
+    }
+   ]
+  },
+  {
+   "item": "Part D",
+   "unit": "Kgs",
+   "closing_qty": "550.00",
+   "closing_value": "6110.00",
+   "locations": [
+    {
+     "godown": "Warehouse 2",
+     "batch": "Primary Batch",
+     "qty": "550.00"
+    }
+   ]
+  },
+  {
+   "item": "Tonic Syrup",
+   "unit": "Nos",
+   "closing_qty": "160.00",
+   "closing_value": "13303.67",
+   "locations": [
+    {
+     "godown": "Main Location",
+     "batch": "B-2601",
+     "qty": "50.00"
+    },
+    {
+     "godown": "Main Location",
+     "batch": "T-2604",
+     "qty": "55.00"
+    },
+    {
+     "godown": "Main Location",
+     "batch": "T-2606",
+     "qty": "5.00"
+    },
+    {
+     "godown": "Main Location",
+     "batch": "T-2609",
+     "qty": "50.00"
+    }
+   ]
+  },
+  {
+   "item": "Widget A",
+   "unit": "Nos",
+   "closing_qty": "185.00",
+   "closing_value": "9660.32",
+   "locations": [
+    {
+     "godown": "Main Location",
+     "batch": "Primary Batch",
+     "qty": "165.00"
+    },
+    {
+     "godown": "Warehouse 2",
+     "batch": "Primary Batch",
+     "qty": "20.00"
+    }
+   ]
+  },
+  {
+   "item": "Widget B",
+   "unit": "Nos",
+   "closing_qty": "80.00",
+   "closing_value": "9131.35",
+   "locations": [
+    {
+     "godown": "Main Location",
+     "batch": "Primary Batch",
+     "qty": "80.00"
+    }
+   ]
+  }
+ ],
+ "batch_closing": [
+  {
+   "item": "Tonic Syrup",
+   "godown": "Main Location",
+   "batch": "B-2601",
+   "qty": "50.00"
+  },
+  {
+   "item": "Tonic Syrup",
+   "godown": "Main Location",
+   "batch": "T-2604",
+   "qty": "55.00"
+  },
+  {
+   "item": "Tonic Syrup",
+   "godown": "Main Location",
+   "batch": "T-2606",
+   "qty": "5.00"
+  },
+  {
+   "item": "Tonic Syrup",
+   "godown": "Main Location",
+   "batch": "T-2609",
+   "qty": "50.00"
+  }
+ ],
+ "pending_orders": {
+  "lines": [
+   {
+    "order": "SO-001",
+    "kind": "sales_order",
+    "party": "Alpha Retail",
+    "item": "Widget A",
+    "ordered_qty": "50.00",
+    "delivered_qty": "30.00",
+    "pending_qty": "20.00",
+    "rate": "82.00",
+    "pending_value": "1640.00",
+    "due_date": "2026-06-30",
+    "overdue": true
+   },
+   {
+    "order": "SO-001",
+    "kind": "sales_order",
+    "party": "Alpha Retail",
+    "item": "Gadget C",
+    "ordered_qty": "5.00",
+    "delivered_qty": "0.00",
+    "pending_qty": "5.00",
+    "rate": "262.00",
+    "pending_value": "1310.00",
+    "due_date": "2026-05-31",
+    "overdue": true
+   },
+   {
+    "order": "PO-001",
+    "kind": "purchase_order",
+    "party": "Omega Supplies",
+    "item": "Widget A",
+    "ordered_qty": "100.00",
+    "delivered_qty": "80.00",
+    "pending_qty": "20.00",
+    "rate": "53.00",
+    "pending_value": "1060.00",
+    "due_date": "2026-06-15",
+    "overdue": true
+   },
+   {
+    "order": "SO-002",
+    "kind": "sales_order",
+    "party": "Beta Stores",
+    "item": "Widget B",
+    "ordered_qty": "30.00",
+    "delivered_qty": "0.00",
+    "pending_qty": "30.00",
+    "rate": "208.00",
+    "pending_value": "6240.00",
+    "due_date": "2026-10-10",
+    "overdue": false
+   }
+  ],
+  "by_party": [
+   {
+    "kind": "purchase_order",
+    "party": "Omega Supplies",
+    "pending_qty": "20.00",
+    "pending_value": "1060.00"
+   },
+   {
+    "kind": "sales_order",
+    "party": "Alpha Retail",
+    "pending_qty": "25.00",
+    "pending_value": "2950.00"
+   },
+   {
+    "kind": "sales_order",
+    "party": "Beta Stores",
+    "pending_qty": "30.00",
+    "pending_value": "6240.00"
+   }
+  ],
+  "by_item": [
+   {
+    "kind": "purchase_order",
+    "item": "Widget A",
+    "pending_qty": "20.00",
+    "pending_value": "1060.00"
+   },
+   {
+    "kind": "sales_order",
+    "item": "Gadget C",
+    "pending_qty": "5.00",
+    "pending_value": "1310.00"
+   },
+   {
+    "kind": "sales_order",
+    "item": "Widget A",
+    "pending_qty": "20.00",
+    "pending_value": "1640.00"
+   },
+   {
+    "kind": "sales_order",
+    "item": "Widget B",
+    "pending_qty": "30.00",
+    "pending_value": "6240.00"
+   }
+  ]
+ },
+ "gst_summary": [
+  {
+   "direction": "inward",
+   "head": "cgst",
+   "rate": "6.00",
+   "taxable": "6600.00",
+   "tax": "396.00"
+  },
+  {
+   "direction": "inward",
+   "head": "cgst",
+   "rate": "9.00",
+   "taxable": "34335.00",
+   "tax": "3090.15"
+  },
+  {
+   "direction": "inward",
+   "head": "igst",
+   "rate": "12.00",
+   "taxable": "23770.00",
+   "tax": "2852.40"
+  },
+  {
+   "direction": "inward",
+   "head": "igst",
+   "rate": "5.00",
+   "taxable": "5700.00",
+   "tax": "285.00"
+  },
+  {
+   "direction": "inward",
+   "head": "sgst",
+   "rate": "6.00",
+   "taxable": "6600.00",
+   "tax": "396.00"
+  },
+  {
+   "direction": "inward",
+   "head": "sgst",
+   "rate": "9.00",
+   "taxable": "34335.00",
+   "tax": "3090.15"
+  },
+  {
+   "direction": "outward",
+   "head": "cgst",
+   "rate": "2.50",
+   "taxable": "2400.00",
+   "tax": "60.00"
+  },
+  {
+   "direction": "outward",
+   "head": "cgst",
+   "rate": "6.00",
+   "taxable": "23235.00",
+   "tax": "1394.10"
+  },
+  {
+   "direction": "outward",
+   "head": "cgst",
+   "rate": "9.00",
+   "taxable": "14290.00",
+   "tax": "1286.10"
+  },
+  {
+   "direction": "outward",
+   "head": "igst",
+   "rate": "12.00",
+   "taxable": "4230.00",
+   "tax": "507.60"
+  },
+  {
+   "direction": "outward",
+   "head": "igst",
+   "rate": "18.00",
+   "taxable": "16275.00",
+   "tax": "2929.50"
+  },
+  {
+   "direction": "outward",
+   "head": "igst",
+   "rate": "5.00",
+   "taxable": "1250.00",
+   "tax": "62.50"
+  },
+  {
+   "direction": "outward",
+   "head": "sgst",
+   "rate": "2.50",
+   "taxable": "2400.00",
+   "tax": "60.00"
+  },
+  {
+   "direction": "outward",
+   "head": "sgst",
+   "rate": "6.00",
+   "taxable": "23235.00",
+   "tax": "1394.10"
+  },
+  {
+   "direction": "outward",
+   "head": "sgst",
+   "rate": "9.00",
+   "taxable": "14290.00",
+   "tax": "1286.10"
+  }
+ ],
+ "voucher_counts_by_kind": {
+  "contra": 2,
+  "credit_note": 1,
+  "debit_note": 1,
+  "delivery_note": 1,
+  "journal": 2,
+  "payment": 8,
+  "purchase": 8,
+  "purchase_order": 1,
+  "receipt": 8,
+  "receipt_note": 1,
+  "sales": 15,
+  "sales_order": 3,
+  "stock_journal": 1
+ },
+ "voucher_total": 52
+}

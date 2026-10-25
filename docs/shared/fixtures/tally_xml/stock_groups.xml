@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ENVELOPE>
+  <HEADER>
+    <VERSION>1</VERSION>
+    <STATUS>1</STATUS>
+  </HEADER>
+  <BODY>
+    <DATA>
+      <COLLECTION>
+        <STOCKGROUP NAME="Hardware">
+          <GUID>4a494970-b2dd-57f8-a3b6-0bf297564682-0000006b</GUID>
+          <ALTERID>106</ALTERID>
+        </STOCKGROUP>
+        <STOCKGROUP NAME="Consumables">
+          <GUID>5b7f425f-d540-561a-bc82-731f9d3d19c0-0000006c</GUID>
+          <ALTERID>107</ALTERID>
+        </STOCKGROUP>
+      </COLLECTION>
+    </DATA>
+  </BODY>
+</ENVELOPE>

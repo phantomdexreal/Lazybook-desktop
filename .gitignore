@@ -1,0 +1,14 @@
+node_modules/
+.next/
+out/
+tests/.tmp/
+dist/
+release/
+android/build/
+android/app/build/
+.env.local
+.env
+*.log
+*.keystore
+*.jks
+.DS_Store

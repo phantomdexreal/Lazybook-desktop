@@ -1,0 +1,57 @@
+[
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "ledger_guid": "91d185ff-e8f9-5976-a314-6ca981fa9e73-00000011",
+  "applicable_from": "2017-07-01",
+  "gst_registration_type": "Regular",
+  "gstin": "27AAAPA1111A1Z1",
+  "place_of_supply": "Maharashtra",
+  "is_other_territory": false,
+  "is_transporter": false,
+  "transporter_id": ""
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "ledger_guid": "0809e8be-2273-5f10-a2da-1956ba3373f5-00000012",
+  "applicable_from": "2017-07-01",
+  "gst_registration_type": "Regular",
+  "gstin": "29AAAPB2222B1Z2",
+  "place_of_supply": "Karnataka",
+  "is_other_territory": false,
+  "is_transporter": false,
+  "transporter_id": ""
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "ledger_guid": "a7d89e67-a0ce-5ee5-a8e7-9394183af175-00000013",
+  "applicable_from": "2017-07-01",
+  "gst_registration_type": "Regular",
+  "gstin": "27AAAPG3333C1Z3",
+  "place_of_supply": "Maharashtra",
+  "is_other_territory": false,
+  "is_transporter": false,
+  "transporter_id": ""
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "ledger_guid": "dc08287e-d6a4-5cda-9ed3-8eedc338468b-00000014",
+  "applicable_from": "2017-07-01",
+  "gst_registration_type": "Regular",
+  "gstin": "27AAAPO4444D1Z4",
+  "place_of_supply": "Maharashtra",
+  "is_other_territory": false,
+  "is_transporter": false,
+  "transporter_id": ""
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "ledger_guid": "1266481f-5d09-501f-81c3-1f21cd9589dd-00000015",
+  "applicable_from": "2017-07-01",
+  "gst_registration_type": "Regular",
+  "gstin": "24AAAPZ5555E1Z5",
+  "place_of_supply": "Gujarat",
+  "is_other_territory": false,
+  "is_transporter": false,
+  "transporter_id": ""
+ }
+]

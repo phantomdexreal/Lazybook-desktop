@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ENVELOPE>
+  <HEADER>
+    <VERSION>1</VERSION>
+    <STATUS>1</STATUS>
+  </HEADER>
+  <BODY>
+    <DATA>
+      <COLLECTION>
+        <VOUCHERTYPE NAME="Tax Invoice">
+          <GUID>9ba91642-88b2-5a9a-a793-870f99a57b64-00000028</GUID>
+          <PARENT>Sales</PARENT>
+          <NUMBERINGMETHOD>Automatic</NUMBERINGMETHOD>
+          <ALTERID>39</ALTERID>
+        </VOUCHERTYPE>
+        <VOUCHERTYPE NAME="Sales">
+          <GUID>4b2e518f-77e4-5a29-ac53-38d7a8b70374-00000029</GUID>
+          <NUMBERINGMETHOD>Automatic</NUMBERINGMETHOD>
+          <ALTERID>40</ALTERID>
+        </VOUCHERTYPE>
+        <VOUCHERTYPE NAME="Purchase">
+          <GUID>47ef69f7-1475-5a31-be9e-097087e3c02a-0000002a</GUID>
+          <NUMBERINGMETHOD>Automatic</NUMBERINGMETHOD>
+          <ALTERID>41</ALTERID>
+        </VOUCHERTYPE>
+        <VOUCHERTYPE NAME="Receipt">
+          <GUID>1d9bb38e-d71a-5198-a300-e8db5bd9bad4-0000002b</GUID>
+          <NUMBERINGMETHOD>Automatic</NUMBERINGMETHOD>
+          <ALTERID>42</ALTERID>
+        </VOUCHERTYPE>
+        <VOUCHERTYPE NAME="Payment">
+          <GUID>27a46c10-967a-5f53-89dc-5194ffe62ee7-0000002c</GUID>
+          <NUMBERINGMETHOD>Automatic</NUMBERINGMETHOD>
+          <ALTERID>43</ALTERID>
+        </VOUCHERTYPE>
+        <VOUCHERTYPE NAME="Contra">
+          <GUID>93aed313-194f-5e15-83fb-87019bb1dcfd-0000002d</GUID>
+          <NUMBERINGMETHOD>Automatic</NUMBERINGMETHOD>
+          <ALTERID>44</ALTERID>
+        </VOUCHERTYPE>
+        <VOUCHERTYPE NAME="Journal">
+          <GUID>d1455427-3d6b-53a6-87ef-207348696827-0000002e</GUID>
+          <NUMBERINGMETHOD>Automatic</NUMBERINGMETHOD>
+          <ALTERID>45</ALTERID>
+        </VOUCHERTYPE>
+        <VOUCHERTYPE NAME="Credit Note">
+          <GUID>29b9ffca-46ba-53a8-bf19-572a2b01cfa6-0000002f</GUID>
+          <NUMBERINGMETHOD>Automatic</NUMBERINGMETHOD>
+          <ALTERID>46</ALTERID>
+        </VOUCHERTYPE>
+        <VOUCHERTYPE NAME="Debit Note">
+          <GUID>6978556e-41f9-5c9a-8de5-fab57be97559-00000030</GUID>
+          <NUMBERINGMETHOD>Automatic</NUMBERINGMETHOD>
+          <ALTERID>47</ALTERID>
+        </VOUCHERTYPE>
+        <VOUCHERTYPE NAME="Delivery Note">
+          <GUID>969172ed-c1d6-5a8c-8487-a40cad5a686b-00000031</GUID>
+          <NUMBERINGMETHOD>Automatic</NUMBERINGMETHOD>
+          <ALTERID>48</ALTERID>
+        </VOUCHERTYPE>
+        <VOUCHERTYPE NAME="Receipt Note">
+          <GUID>f27750a5-1c04-517d-9960-99905e7b0b10-00000032</GUID>
+          <NUMBERINGMETHOD>Automatic</NUMBERINGMETHOD>
+          <ALTERID>49</ALTERID>
+        </VOUCHERTYPE>
+        <VOUCHERTYPE NAME="Sales Order">
+          <GUID>1886a452-01fa-557b-9678-f4ecaa7b1f5e-00000033</GUID>
+          <NUMBERINGMETHOD>Automatic</NUMBERINGMETHOD>
+          <ALTERID>50</ALTERID>
+        </VOUCHERTYPE>
+        <VOUCHERTYPE NAME="Purchase Order">
+          <GUID>c3cbd6ed-8e96-5615-9830-b49feebb8726-00000034</GUID>
+          <NUMBERINGMETHOD>Automatic</NUMBERINGMETHOD>
+          <ALTERID>51</ALTERID>
+        </VOUCHERTYPE>
+        <VOUCHERTYPE NAME="Sales Quotation">
+          <GUID>10f582f1-7875-58ec-8362-43c370917ae7-00000035</GUID>
+          <PARENT>Sales Order</PARENT>
+          <NUMBERINGMETHOD>Automatic</NUMBERINGMETHOD>
+          <ALTERID>52</ALTERID>
+        </VOUCHERTYPE>
+        <VOUCHERTYPE NAME="Stock Journal">
+          <GUID>f3ba9094-9886-5ae3-9035-1e6f644eeaa2-00000036</GUID>
+          <NUMBERINGMETHOD>Automatic</NUMBERINGMETHOD>
+          <ALTERID>53</ALTERID>
+        </VOUCHERTYPE>
+      </COLLECTION>
+    </DATA>
+  </BODY>
+</ENVELOPE>

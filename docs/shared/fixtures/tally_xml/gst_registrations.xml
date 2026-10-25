@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ENVELOPE>
+  <HEADER>
+    <VERSION>1</VERSION>
+    <STATUS>1</STATUS>
+  </HEADER>
+  <BODY>
+    <DATA>
+      <COLLECTION>
+        <TAXUNIT NAME="Maharashtra Registration">
+          <GUID>f37bcd25-06e3-5eb5-a506-9f031645f61e-00000072</GUID>
+          <GSTREGNUMBER>27AAACD1234E1Z5</GSTREGNUMBER>
+          <ALTERID>115</ALTERID>
+          <GSTDETAILS.LIST>
+            <STATENAME>Maharashtra</STATENAME>
+            <GSTREGISTRATIONTYPE>Regular</GSTREGISTRATIONTYPE>
+            <APPLICABLEFROM>20170701</APPLICABLEFROM>
+          </GSTDETAILS.LIST>
+        </TAXUNIT>
+      </COLLECTION>
+    </DATA>
+  </BODY>
+</ENVELOPE>

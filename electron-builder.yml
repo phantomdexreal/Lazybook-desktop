@@ -1,0 +1,48 @@
+# LazyBooks | electron-builder.yml
+# Responsibility: Installer
+# Introduced by: Phase 38 (installer) - see PHASES.md before editing.
+# One-click, per-user Windows installer (NSIS). No admin rights, no code signing (paid; see README for the SmartScreen step).
+# Icons: build/icon.ico and build/icon.png are neutral placeholders from tools/gen-icons.mjs; the owner replaces the two files.
+# Phase 39 (updater.ts) takes its feed from the bootstrap download_url. latest.yml is written by electron-builder only when a publish
+# target is given: the release workflow (Phase 42) passes -c.publish.provider=generic -c.publish.url=<releases download url>.
+appId: com.lazybooks.desktop
+productName: LazyBooks
+copyright: LazyBooks
+artifactName: LazyBooks-Setup-${version}.${ext}
+directories:
+  output: release
+  buildResources: build
+files:
+  - out/**/*
+  - package.json
+  - '!**/*.map'
+asar: true
+# Phase 40: the PWA export (stub until PEER-06) is shipped unpacked and served by the custom protocol.
+extraResources:
+  - from: resources/pwa
+    to: pwa
+# Native module: must live outside the asar and be rebuilt for Electron's ABI (npm run rebuild:native).
+asarUnpack:
+  - node_modules/better-sqlite3/**
+npmRebuild: true
+win:
+  icon: build/icon.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+  signAndEditExecutable: true
+  requestedExecutionLevel: asInvoker
+nsis:
+  oneClick: true
+  perMachine: false
+  allowElevation: false
+  runAfterFinish: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: LazyBooks
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
+  deleteAppDataOnUninstall: false
+  include: build/installer.nsh

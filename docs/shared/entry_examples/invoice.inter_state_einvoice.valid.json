@@ -1,0 +1,60 @@
+{
+ "v": 1,
+ "kind": "invoice",
+ "client_request_id": "11111111-1111-4111-8111-111111111114",
+ "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+ "created_at": "2026-09-25T10:15:00Z",
+ "device_id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+ "data": {
+  "voucher_type_guid": "9ba91642-88b2-5a9a-a793-870f99a57b64-00000028",
+  "base_kind": "sales",
+  "date": "2026-09-26",
+  "party_ledger_guid": "0809e8be-2273-5f10-a2da-1956ba3373f5-00000012",
+  "item_ledger_guid": "88be6425-7f53-5418-a013-28f3e4c43ef0-00000016",
+  "place_of_supply": "Karnataka",
+  "lines": [
+   {
+    "stock_item_guid": "1247b981-fb00-5f75-acd8-0acea03f7a2a-00000022",
+    "godown_guid": "n:Main Location",
+    "qty": "5",
+    "unit": "Nos",
+    "rate": "80.00",
+    "amount": "400.00",
+    "gst_rate": "18.00"
+   }
+  ],
+  "tax": {
+   "mode": "inter",
+   "lines": [
+    {
+     "head": "igst",
+     "ledger_guid": "724cbae6-d5c5-5d6c-baa1-9e64435ae43a-0000001a",
+     "amount": "72.00",
+     "breakup": [
+      {
+       "rate": "18.00",
+       "taxable": "400.00"
+      }
+     ]
+    }
+   ]
+  },
+  "total": "472.00",
+  "bills": [
+   {
+    "type": "new_ref",
+    "name": "TI-014",
+    "amount": "472.00"
+   }
+  ],
+  "einvoice": {
+   "generate": true
+  },
+  "eway": {
+   "generate": true,
+   "vehicle_no": "KA01AB1234",
+   "distance_km": 900,
+   "mode": "road"
+  }
+ }
+}

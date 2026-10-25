@@ -1,0 +1,26 @@
+{
+ "v": 1,
+ "kind": "order",
+ "client_request_id": "77777777-7777-4777-8777-777777777778",
+ "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+ "created_at": "2026-09-25T10:15:00Z",
+ "device_id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+ "data": {
+  "voucher_type_guid": "1886a452-01fa-557b-9678-f4ecaa7b1f5e-00000033",
+  "base_kind": "sales_order",
+  "date": "2026-09-24",
+  "number": "SO-003",
+  "party_ledger_guid": "0809e8be-2273-5f10-a2da-1956ba3373f5-00000012",
+  "lines": [
+   {
+    "stock_item_guid": "eeb88362-d3bd-5080-86b2-855c920840ad-00000023",
+    "godown_guid": "n:Main Location",
+    "qty": "10",
+    "unit": "Nos",
+    "rate": "208.00",
+    "amount": "2080.00",
+    "due_date": "2026-09-01"
+   }
+  ]
+ }
+}

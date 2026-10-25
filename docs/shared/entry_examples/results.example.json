@@ -1,0 +1,31 @@
+{
+ "posted": {
+  "ok": true,
+  "guid": "GUID-OF-NEW-VOUCHER",
+  "voucher_number": "S-002",
+  "alter_id": 120,
+  "message": "Created in Tally"
+ },
+ "failed_ledger": {
+  "ok": false,
+  "code": "LB_TALLY_REJECTED",
+  "detail": "LEDGER_NOT_FOUND",
+  "retryable": false,
+  "message": "Ledger 'Alpha Retail' does not exist in Tally",
+  "tally_raw": "<RESPONSE><LINEERROR>Ledger 'Alpha Retail' does not exist!</LINEERROR><CREATED>0</CREATED><ERRORS>1</ERRORS></RESPONSE>"
+ },
+ "needs_review": {
+  "ok": false,
+  "code": "LB_ENTRY_NEEDS_REVIEW",
+  "detail": "AMBIGUOUS_RESULT",
+  "retryable": false,
+  "message": "Tally closed before answering; voucher not found on read-back"
+ },
+ "duplicate_found": {
+  "ok": true,
+  "guid": "GUID-OF-EXISTING-VOUCHER",
+  "voucher_number": "S-002",
+  "alter_id": 120,
+  "message": "Already posted (found by client_request_id)"
+ }
+}

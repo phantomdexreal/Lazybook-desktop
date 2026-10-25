@@ -1,0 +1,28 @@
+[
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "guid": "0e263c81-3ec4-54fb-8670-7d03f8e7e759-00000070",
+  "name": "Ravi Kumar",
+  "name_lc": "ravi kumar",
+  "parent_name": "",
+  "employee_number": "E-1",
+  "designation": "Sales Executive",
+  "date_of_joining": "2024-04-01",
+  "pan": "",
+  "mobile": "",
+  "alter_id": 113
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "guid": "fefd9d63-6f55-5909-bcd4-f8610a68e286-00000071",
+  "name": "Sunita Joshi",
+  "name_lc": "sunita joshi",
+  "parent_name": "",
+  "employee_number": "E-2",
+  "designation": "Accountant",
+  "date_of_joining": "2024-04-01",
+  "pan": "",
+  "mobile": "",
+  "alter_id": 114
+ }
+]

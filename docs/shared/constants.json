@@ -1,0 +1,193 @@
+{
+  "constants_version": 1,
+  "description": "Every cross-repo default in one place. Phases cite these by dotted name (for example polling.chunk_poll_initial_ms). Changing a value is a SHARED_CHANGELOG entry.",
+  "contract": {
+    "contract_version": 1,
+    "schema_version": 1,
+    "data_model_version": 1,
+    "entry_payload_v": 1,
+    "crypto_envelope_v": 1,
+    "snapshot_format": "LBS1",
+    "bootstrap_cache_max_age_hours": 168
+  },
+  "license_key": {
+    "prefix": "LB-",
+    "alphabet": "ABCDEFGHJKLMNPQRSTUVWXYZ23456789",
+    "groups": 4,
+    "group_length": 4,
+    "generator_regex": "^LB-[A-HJ-NP-Z2-9]{4}(-[A-HJ-NP-Z2-9]{4}){3}$",
+    "client_validation_regex": "^LB-[A-Z0-9]{4}(-[A-Z0-9]{4}){3}$",
+    "reserved_test_keys": ["LB-DEMO-0000-0000-0001", "LB-TEST-0000-0000-0001"],
+    "note": "Clients validate with the loose regex so the reserved demo/test keys work; only the admin generator uses the strict alphabet."
+  },
+  "polling": {
+    "chunk_poll_initial_ms": 2000,
+    "chunk_poll_max_ms": 10000,
+    "chunk_poll_backoff_factor": 1.5,
+    "min_poll_interval_ms": 2000,
+    "idle_visible_poll_ms": 30000,
+    "idle_hidden_poll_ms": 300000,
+    "entry_status_poll_initial_ms": 2000,
+    "entry_status_poll_max_ms": 10000,
+    "request_pickup_wait_s": 90,
+    "request_stale_after_min": 30,
+    "entry_waiting_hint_min": 10,
+    "realtime_enabled_default": true
+  },
+  "desktop": {
+    "tally_host": "localhost",
+    "tally_port": 9000,
+    "tally_timeout_s": 60,
+    "tally_retries": 2,
+    "sync_interval_min": 5,
+    "sync_interval_min_allowed": 1,
+    "deleted_check_interval_h": 24,
+    "closing_balance_interval_h": 24,
+    "heartbeat_min": 5,
+    "bootstrap_refresh_min": 30,
+    "online_threshold_min": 10,
+    "max_inflight_chunks_per_device": 40,
+    "request_listener_poll_s": 5,
+    "entry_listener_poll_s": 5,
+    "entry_max_attempts": 3,
+    "log_rotate_mb": 5,
+    "log_keep_files": 7
+  },
+  "device": {
+    "bootstrap_refresh_foreground_min": 30,
+    "heartbeat_min": 5,
+    "delta_interval_min_default": 10,
+    "delta_interval_min_range": [5, 30],
+    "default_company_history_days": 365,
+    "device_id_format": "uuid-v4",
+    "client_request_id_format": "uuid-v4"
+  },
+  "sync": {
+    "chunk_max_payload_bytes": 200000,
+    "chunk_max_rows": 500,
+    "chunk_ttl_hours": 24,
+    "request_done_retention_days": 7,
+    "entry_done_retention_days": 30,
+    "reminder_log_retention_days": 90,
+    "lookback_days_default": 7,
+    "lookback_days_max": 31,
+    "history_days_default": 365,
+    "history_days_max": 1095,
+    "bridge_batch_max_statements": 1000,
+    "store_bulk_batch_rows": 500,
+    "table_order": ["tm_company", "tm_group", "tm_ledger", "tm_ledger_address", "tm_ledger_contact", "tm_ledger_gst", "tm_ledger_opening_bill", "tm_voucher_type", "tm_stock_group", "tm_stock_category", "tm_unit", "tm_godown", "tm_stock_item", "tm_stock_item_gst", "tm_stock_batch_opening", "tm_cost_centre", "tm_currency", "tm_employee", "tm_gst_registration", "tx_voucher", "tx_ledger_line", "tx_inventory_line", "tx_batch_alloc", "tx_bill_alloc", "tx_tax_line"],
+    "gzip_chunks": true
+  },
+  "snapshot": {
+    "object_max_bytes": 47185920,
+    "bucket_object_limit_bytes": 52428800,
+    "full_rebuild_delta_ratio": 0.5,
+    "full_rebuild_max_deltas": 14,
+    "full_rebuild_max_age_days": 7,
+    "delta_min_interval_min": 60,
+    "quota_headroom_ratio": 1.0,
+    "peak_rule": "2 * full_bytes + sum(delta_bytes) <= plan snapshot_mb"
+  },
+  "crypto": {
+    "kdf": "PBKDF2-HMAC-SHA256",
+    "iterations": 210000,
+    "salt_bytes": 16,
+    "key_bytes": 32,
+    "iv_bytes": 12,
+    "tag_bytes": 16,
+    "aad_prefix": "lb1|",
+    "kcv_label": "LB-KCV-v1",
+    "kcv_bytes": 8
+  },
+  "money": {
+    "scale": 4,
+    "default_currency_decimals": 2,
+    "rounding": "half_away_from_zero",
+    "round_off_to": "1.00",
+    "wire_regex": "^-?\\d+(\\.\\d{1,4})?$"
+  },
+  "ageing": {
+    "buckets_days": [[0, 30], [31, 60], [61, 90], [91, null]],
+    "labels": ["0-30", "31-60", "61-90", "91+"],
+    "age_basis": "bill_date",
+    "overdue_basis": "due_date"
+  },
+  "limits": {
+    "plans": {
+      "basic": {"max_devices": 3, "max_companies": 1, "snapshot_mb": 0},
+      "pro": {"max_devices": 10, "max_companies": 3, "snapshot_mb": 200}
+    },
+    "entry_payload_max_bytes": 100000,
+    "support_request_max_bytes": 20000,
+    "support_requests_per_hour": 10,
+    "ledger_name_max": 100,
+    "narration_max": 500,
+    "bill_name_max": 60,
+    "voucher_lines_max": 200,
+    "journal_lines_max": 100
+  },
+  "flags": {
+    "missing_flag_default": {
+      "reports": true, "outstanding": true, "inventory": true, "orders": false, "entries": false, "einvoice_eway": false, "reminders": false,
+      "auto_share": false, "punch_in_out": false, "team_users": false, "multi_company": false, "cloud_copy": false, "e2e_encryption": true,
+      "upi_qr": false, "export_pdf": true, "export_xlsx": false, "web_push": false, "themes_user_switch": true, "embedded_pwa_desktop": false, "beta_channel": false
+    },
+    "plan_defaults": {
+      "basic": {"reports": true, "outstanding": true, "inventory": true, "orders": false, "entries": false, "einvoice_eway": false, "reminders": false, "auto_share": false, "punch_in_out": false, "team_users": false, "multi_company": false, "cloud_copy": false, "e2e_encryption": true, "upi_qr": false, "export_pdf": true, "export_xlsx": false, "web_push": false, "themes_user_switch": true, "embedded_pwa_desktop": false, "beta_channel": false},
+      "pro": {"reports": true, "outstanding": true, "inventory": true, "orders": true, "entries": true, "einvoice_eway": true, "reminders": true, "auto_share": true, "punch_in_out": true, "team_users": true, "multi_company": true, "cloud_copy": true, "e2e_encryption": true, "upi_qr": true, "export_pdf": true, "export_xlsx": true, "web_push": true, "themes_user_switch": true, "embedded_pwa_desktop": true, "beta_channel": false}
+    },
+    "rule": "Unknown flag = false. A known flag missing from bootstrap.features uses missing_flag_default."
+  },
+  "themes": {
+    "default_slug": "obsidian-violet",
+    "default_mode": "system",
+    "default_policy": {"allowed": "all", "default": "obsidian-violet", "allow_user_switch": true},
+    "schema_version": 1,
+    "chart_colors": 8,
+    "builtin_slugs": ["obsidian-violet", "graphite-iris", "ink-lilac"]
+  },
+  "branding": {
+    "app_name_default": "LazyBooks",
+    "bucket": "branding",
+    "asset_keys": ["logo_light", "logo_dark", "icon", "favicon", "splash"],
+    "global_prefix": "global/"
+  },
+  "releases": {
+    "channels": ["stable", "beta", "dev"],
+    "default_channel": "stable",
+    "default_rollout_pct": 100,
+    "apps": ["pwa", "mobile", "desktop", "admin"],
+    "semver_regex": "^\\d+\\.\\d+\\.\\d+$"
+  },
+  "entries": {
+    "kinds": ["invoice", "receipt", "payment", "contra", "journal", "inventory_voucher", "order", "quotation", "ledger", "stock_item", "alter", "cancel", "delete"],
+    "statuses": ["queued", "posting", "posted", "failed", "needs_review", "cancelled"],
+    "gst_tolerance": "0.01",
+    "total_tolerance": "0.01",
+    "default_bill_credit_days_source": "ledger.credit_period_days"
+  },
+  "perf": {
+    "status": "assumed",
+    "note": "Starting targets; confirm or correct on real devices (checklist DEV-SQLITE, DEV-PERF) and record the result in PHASE_STATUS. Storage benchmark data comes from fixtures/tools/gen_bench_data.py (storage speed only; the cloned data is not accounting-consistent).",
+    "bench_vouchers": 200000,
+    "budgets_ms": {"list_first_page": 100, "search_party": 150, "voucher_detail": 80, "outstanding_aggregate": 800, "trial_balance": 600, "day_book_month": 300},
+    "budget_seconds": {"initial_apply_200k_mid_device": 180},
+    "low_end_multiplier": 2,
+    "low_end_ram_mb": 2048
+  },
+  "ui": {
+    "breakpoints_px": {"mobile": 390, "desktop": 1280},
+    "search_debounce_ms": 120,
+    "toast_ms": 4000,
+    "list_page_size": 50
+  },
+  "demo": {
+    "license_key": "LB-DEMO-0000-0000-0001",
+    "company_name": "Demo Traders Pvt Ltd",
+    "passphrase": "correct horse battery staple",
+    "owner_email": "demo-owner@example.invalid",
+    "connector_email": "demo-connector@example.invalid",
+    "admin_email": "demo-admin@example.invalid",
+    "note": "Demo values only. The demo passphrase equals the crypto_vectors.json passphrase on purpose."
+  }
+}

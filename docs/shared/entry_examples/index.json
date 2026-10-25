@@ -1,0 +1,133 @@
+{
+ "description": "Every file here is an entry_queue.payload. expect = valid or the detail code the validator must report. Validate with fixtures/tools/validate_entries.py.",
+ "examples": [
+  {
+   "file": "invoice.valid.json",
+   "expect": "valid"
+  },
+  {
+   "file": "invoice.invalid.json",
+   "expect": "TOTAL_MISMATCH"
+  },
+  {
+   "file": "invoice.invalid_tax.json",
+   "expect": "TAX_MISMATCH"
+  },
+  {
+   "file": "invoice.inter_state_einvoice.valid.json",
+   "expect": "valid"
+  },
+  {
+   "file": "receipt.valid.json",
+   "expect": "valid"
+  },
+  {
+   "file": "receipt.invalid.json",
+   "expect": "UNBALANCED"
+  },
+  {
+   "file": "payment.valid.json",
+   "expect": "valid"
+  },
+  {
+   "file": "payment.expense.valid.json",
+   "expect": "valid"
+  },
+  {
+   "file": "payment.invalid.json",
+   "expect": "PAYLOAD_INVALID"
+  },
+  {
+   "file": "contra.valid.json",
+   "expect": "valid"
+  },
+  {
+   "file": "contra.invalid.json",
+   "expect": "UNBALANCED"
+  },
+  {
+   "file": "journal.valid.json",
+   "expect": "valid"
+  },
+  {
+   "file": "journal.invalid.json",
+   "expect": "UNBALANCED"
+  },
+  {
+   "file": "inventory_voucher.valid.json",
+   "expect": "valid"
+  },
+  {
+   "file": "inventory_voucher.stock_journal.valid.json",
+   "expect": "valid"
+  },
+  {
+   "file": "inventory_voucher.invalid.json",
+   "expect": "STOCK_ITEM_NOT_FOUND"
+  },
+  {
+   "file": "order.valid.json",
+   "expect": "valid"
+  },
+  {
+   "file": "order.invalid.json",
+   "expect": "PAYLOAD_INVALID"
+  },
+  {
+   "file": "quotation.valid.json",
+   "expect": "valid"
+  },
+  {
+   "file": "quotation.invalid.json",
+   "expect": "VOUCHER_TYPE_MISMATCH"
+  },
+  {
+   "file": "ledger.valid.json",
+   "expect": "valid"
+  },
+  {
+   "file": "ledger.invalid.json",
+   "expect": "MASTER_NOT_FOUND"
+  },
+  {
+   "file": "stock_item.valid.json",
+   "expect": "valid"
+  },
+  {
+   "file": "stock_item.invalid.json",
+   "expect": "MASTER_NOT_FOUND"
+  },
+  {
+   "file": "alter.valid.json",
+   "expect": "valid"
+  },
+  {
+   "file": "alter.invalid.json",
+   "expect": "TOTAL_MISMATCH"
+  },
+  {
+   "file": "alter.einvoice_generate.valid.json",
+   "expect": "valid"
+  },
+  {
+   "file": "alter.einvoice_cancel.valid.json",
+   "expect": "valid"
+  },
+  {
+   "file": "cancel.valid.json",
+   "expect": "valid"
+  },
+  {
+   "file": "cancel.invalid.json",
+   "expect": "TARGET_NOT_FOUND"
+  },
+  {
+   "file": "delete.valid.json",
+   "expect": "valid"
+  },
+  {
+   "file": "delete.invalid.json",
+   "expect": "PAYLOAD_INVALID"
+  }
+ ]
+}

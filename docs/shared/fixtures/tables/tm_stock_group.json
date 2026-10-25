@@ -1,0 +1,32 @@
+[
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "guid": "4a494970-b2dd-57f8-a3b6-0bf297564682-0000006b",
+  "name": "Hardware",
+  "name_lc": "hardware",
+  "parent_name": "",
+  "parent_guid": "",
+  "base_units": "",
+  "costing_method": "",
+  "valuation_method": "",
+  "is_batch_wise": false,
+  "is_perishable": false,
+  "ignore_negative_stock": false,
+  "alter_id": 106
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "guid": "5b7f425f-d540-561a-bc82-731f9d3d19c0-0000006c",
+  "name": "Consumables",
+  "name_lc": "consumables",
+  "parent_name": "",
+  "parent_guid": "",
+  "base_units": "",
+  "costing_method": "",
+  "valuation_method": "",
+  "is_batch_wise": false,
+  "is_perishable": false,
+  "ignore_negative_stock": false,
+  "alter_id": 107
+ }
+]

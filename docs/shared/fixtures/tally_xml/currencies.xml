@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ENVELOPE>
+  <HEADER>
+    <VERSION>1</VERSION>
+    <STATUS>1</STATUS>
+  </HEADER>
+  <BODY>
+    <DATA>
+      <COLLECTION>
+        <CURRENCY NAME="INR">
+          <GUID>38069362-5780-5da4-9bd4-717bdac4d7ea-0000006f</GUID>
+          <MAILINGNAME>Indian Rupee</MAILINGNAME>
+          <ORIGINALSYMBOL>INR</ORIGINALSYMBOL>
+          <DECIMALPLACES>2</DECIMALPLACES>
+          <ALTERID>112</ALTERID>
+        </CURRENCY>
+      </COLLECTION>
+    </DATA>
+  </BODY>
+</ENVELOPE>

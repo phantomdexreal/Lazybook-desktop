@@ -1,0 +1,4585 @@
+{
+ "data_model_version": 1,
+ "description": "Machine-readable LazyBooks data model. Dexie stores, SQLite DDL, the Tally wire mapping and the fixtures all derive from this file.",
+ "conventions": {
+  "amounts": {
+   "wire": "JSON string matching ^-?\\d+(\\.\\d{1,4})?$ ; canonical form = at least 2 and at most 4 decimals, trailing zeros beyond the 2nd removed (examples: '1180.00', '0.50', '12.3456')",
+   "storage": "INTEGER = value x 10^4 (scale 4) for every decimal column, in both Dexie and SQLite; sums are integer sums",
+   "rounding": "half away from zero when a source has more than 4 decimals; tax and totals use currency decimals (tm_company.decimal_places, default 2) with half away from zero",
+   "sign": "ledger amounts keep the Tally sign: debit negative, credit positive. Quantities are stored positive; direction comes from the voucher kind and is_deemed_positive",
+   "safe_range": "JS numbers are exact up to 2^53-1 minor units (about 900 billion currency units); aggregate sums that could exceed it must use BigInt in the Dexie adapter; SQLite uses 64-bit integers"
+  },
+  "dates": {
+   "wire_json": "ISO YYYY-MM-DD",
+   "storage": "ISO YYYY-MM-DD text",
+   "tally_wire": "YYYYMMDD",
+   "datetimes": "ISO-8601 UTC with Z (only in control/queue data, not in tm_/tx_ tables)"
+  },
+  "booleans": {
+   "wire_json": "true|false",
+   "storage": "integer 0|1 in both adapters (IndexedDB cannot key booleans)",
+   "tally_wire": "Yes|No"
+  },
+  "nulls": "No column used by an index or primary key may be null. Text columns are never null (empty string = none). Only date and json columns may be null.",
+  "guid": "Use the GUID Tally gives. When Tally gives none (some godowns, cost centres, employees) use 'n:' + exact name. A guid is never recomputed once stored.",
+  "names_vs_guids": "Tally exports many references by NAME. Every reference column pair is <thing>_name (as given) and <thing>_guid (resolved by the connector through the shared resolver; empty string when unresolved). Devices must prefer the guid and fall back to the name.",
+  "company_scope": "Every table except tm_company and ref_voucher_kind has company_guid as the first primary-key column and as the first column of every index.",
+  "json_columns": "JSON values round-trip as objects in Dexie and as TEXT in SQLite",
+  "alter_id": "Tally AlterID of the object. Masters carry alter_id; vouchers carry alter_id and master_id. Incremental pulls use alter_id > last seen max (TALLY_WIRE section 4).",
+  "verify_values": "legacy_seen = the tag appears in the legacy connector field lists (behaviour reference only); assumed = standard Tally tag from public documentation, verify on a real Tally; derived = computed by the connector, no Tally tag"
+ },
+ "tables_order": [
+  "tm_company",
+  "tm_group",
+  "tm_ledger",
+  "tm_ledger_address",
+  "tm_ledger_contact",
+  "tm_ledger_gst",
+  "tm_ledger_opening_bill",
+  "tm_voucher_type",
+  "tm_stock_group",
+  "tm_stock_category",
+  "tm_unit",
+  "tm_godown",
+  "tm_stock_item",
+  "tm_stock_item_gst",
+  "tm_stock_batch_opening",
+  "tm_cost_centre",
+  "tm_currency",
+  "tm_employee",
+  "tm_gst_registration",
+  "tx_voucher",
+  "tx_ledger_line",
+  "tx_inventory_line",
+  "tx_batch_alloc",
+  "tx_bill_alloc",
+  "tx_tax_line",
+  "ref_voucher_kind"
+ ],
+ "tables": {
+  "tm_company": {
+   "group": "master",
+   "description": "One row per company the connector exposes. Not company-scoped (it IS the company).",
+   "primary_key": [
+    "guid"
+   ],
+   "columns": [
+    {
+     "name": "guid",
+     "type": "text",
+     "default": "",
+     "tally": "GUID",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "name",
+     "type": "text",
+     "default": "",
+     "tally": "@NAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "basic_formal_name",
+     "type": "text",
+     "default": "",
+     "tally": "BASICCOMPANYFORMALNAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "starting_from",
+     "type": "date",
+     "nullable": true,
+     "default": null,
+     "tally": "STARTINGFROM",
+     "hint": "tally_date",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "books_from",
+     "type": "date",
+     "nullable": true,
+     "default": null,
+     "tally": "BOOKSFROM",
+     "hint": "tally_date",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "ending_at",
+     "type": "date",
+     "nullable": true,
+     "default": null,
+     "tally": "ENDINGAT",
+     "hint": "tally_date",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "last_voucher_date",
+     "type": "date",
+     "nullable": true,
+     "default": null,
+     "tally": "LASTVOUCHERDATE",
+     "hint": "tally_date",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "alter_id_master",
+     "type": "int",
+     "default": 0,
+     "tally": "ALTMSTID",
+     "hint": "int",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "alter_id_voucher",
+     "type": "int",
+     "default": 0,
+     "tally": "ALTVCHID",
+     "hint": "int",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "state_name",
+     "type": "text",
+     "default": "",
+     "tally": "STATENAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "country",
+     "type": "text",
+     "default": "",
+     "tally": "COUNTRYNAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "pincode",
+     "type": "text",
+     "default": "",
+     "tally": "PINCODE",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "address",
+     "type": "json",
+     "nullable": true,
+     "default": null,
+     "tally": "ADDRESS.LIST",
+     "hint": "list_text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "email",
+     "type": "text",
+     "default": "",
+     "tally": "EMAIL",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "phone",
+     "type": "text",
+     "default": "",
+     "tally": "PHONENUMBER",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "mobile",
+     "type": "text",
+     "default": "",
+     "tally": "MOBILENO",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "website",
+     "type": "text",
+     "default": "",
+     "tally": "WEBSITE",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "gstin",
+     "type": "text",
+     "default": "",
+     "tally": "CMPGSTIN",
+     "hint": "text",
+     "verify": "legacy_seen",
+     "note": "company GSTIN; may come from GSTDETAILS.LIST in some releases"
+    },
+    {
+     "name": "gst_registration_type",
+     "type": "text",
+     "default": "",
+     "tally": "GSTREGISTRATIONTYPE",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "gst_applicable_date",
+     "type": "date",
+     "nullable": true,
+     "default": null,
+     "tally": "GSTAPPLICABLEDATE",
+     "hint": "tally_date",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "pan",
+     "type": "text",
+     "default": "",
+     "tally": "INCOMETAXNUMBER",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "tan",
+     "type": "text",
+     "default": "",
+     "tally": "TANUMBER",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "cin",
+     "type": "text",
+     "default": "",
+     "tally": "CORPORATEIDENTITYNO",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "base_currency_symbol",
+     "type": "text",
+     "default": "",
+     "tally": "BASECURRENCYSYMBOL",
+     "hint": "text",
+     "verify": "assumed"
+    },
+    {
+     "name": "decimal_places",
+     "type": "int",
+     "default": 2,
+     "tally": "DECIMALPLACES",
+     "hint": "int",
+     "verify": "assumed"
+    },
+    {
+     "name": "tally_serial",
+     "type": "text",
+     "default": "",
+     "tally": "$$LicenseInfo:SerialNumber",
+     "hint": "fn",
+     "verify": "assumed",
+     "note": "filled from the $$LicenseInfo function, not from the collection"
+    },
+    {
+     "name": "alter_id",
+     "type": "int",
+     "default": 0,
+     "derive": "max(alter_id_master, alter_id_voucher)",
+     "verify": "derived"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_name",
+     "columns": [
+      "name"
+     ]
+    }
+   ],
+   "scope": "full_refresh",
+   "tally": {
+    "request": "LBCompany",
+    "type": "Company",
+    "object": "COMPANY"
+   }
+  },
+  "tm_group": {
+   "group": "master",
+   "description": "",
+   "primary_key": [
+    "company_guid",
+    "guid"
+   ],
+   "columns": [
+    {
+     "name": "company_guid",
+     "type": "text",
+     "default": "",
+     "derive": "company_guid",
+     "verify": "derived"
+    },
+    {
+     "name": "guid",
+     "type": "text",
+     "default": "",
+     "tally": "GUID",
+     "hint": "text",
+     "verify": "legacy_seen",
+     "note": "fallback key rule: 'n:'+name when Tally gives no GUID"
+    },
+    {
+     "name": "name",
+     "type": "text",
+     "default": "",
+     "tally": "@NAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "name_lc",
+     "type": "text",
+     "default": "",
+     "derive": "lower(trim(name))",
+     "verify": "derived"
+    },
+    {
+     "name": "parent_name",
+     "type": "text",
+     "default": "",
+     "tally": "PARENT",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "parent_guid",
+     "type": "text",
+     "default": "",
+     "derive": "resolve group name -> guid via tm_group",
+     "verify": "derived"
+    },
+    {
+     "name": "reserved_name",
+     "type": "text",
+     "default": "",
+     "tally": "RESERVEDNAME",
+     "hint": "text",
+     "verify": "legacy_seen",
+     "note": "original Tally name of a default group even if renamed; empty for user groups"
+    },
+    {
+     "name": "reserved_root",
+     "type": "text",
+     "default": "",
+     "derive": "reserved_name of nearest ancestor-or-self that has one (name independence)",
+     "verify": "derived"
+    },
+    {
+     "name": "is_revenue",
+     "type": "bool",
+     "default": false,
+     "tally": "ISREVENUE",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "is_deemed_positive",
+     "type": "bool",
+     "default": false,
+     "tally": "ISDEEMEDPOSITIVE",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "affects_gross_profit",
+     "type": "bool",
+     "default": false,
+     "tally": "AFFECTSGROSSPROFIT",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "affects_stock",
+     "type": "bool",
+     "default": false,
+     "tally": "AFFECTSSTOCK",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "is_billwise_on",
+     "type": "bool",
+     "default": false,
+     "tally": "ISBILLWISEON",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "is_cost_centres_on",
+     "type": "bool",
+     "default": false,
+     "tally": "ISCOSTCENTRESON",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "is_subledger",
+     "type": "bool",
+     "default": false,
+     "tally": "ISSUBLEDGER",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "track_negative_balances",
+     "type": "bool",
+     "default": false,
+     "tally": "TRACKNEGATIVEBALANCES",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "nature",
+     "type": "text",
+     "default": "",
+     "derive": "asset|liability|income|expense from is_revenue and is_deemed_positive (CALC_SPECS section 2)",
+     "verify": "derived"
+    },
+    {
+     "name": "closing_balance",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "money",
+     "default": "0.00",
+     "tally": "CLOSINGBALANCE",
+     "hint": "amount",
+     "verify": "legacy_seen",
+     "note": "as reported by Tally, signed (Dr negative)"
+    },
+    {
+     "name": "opening_balance",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "money",
+     "default": "0.00",
+     "tally": "OPENINGBALANCE",
+     "hint": "amount",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "closing_as_of",
+     "type": "date",
+     "nullable": true,
+     "default": null,
+     "derive": "date the closing figures were read",
+     "verify": "derived"
+    },
+    {
+     "name": "alter_id",
+     "type": "int",
+     "default": 0,
+     "tally": "ALTERID",
+     "hint": "int",
+     "verify": "legacy_seen"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_name",
+     "columns": [
+      "company_guid",
+      "name_lc"
+     ]
+    },
+    {
+     "name": "by_parent",
+     "columns": [
+      "company_guid",
+      "parent_guid"
+     ]
+    }
+   ],
+   "scope": "full_refresh",
+   "tally": {
+    "request": "LBGroups",
+    "type": "Group",
+    "object": "GROUP"
+   }
+  },
+  "tm_ledger": {
+   "group": "master",
+   "description": "",
+   "primary_key": [
+    "company_guid",
+    "guid"
+   ],
+   "columns": [
+    {
+     "name": "company_guid",
+     "type": "text",
+     "default": "",
+     "derive": "company_guid",
+     "verify": "derived"
+    },
+    {
+     "name": "guid",
+     "type": "text",
+     "default": "",
+     "tally": "GUID",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "name",
+     "type": "text",
+     "default": "",
+     "tally": "@NAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "name_lc",
+     "type": "text",
+     "default": "",
+     "derive": "lower(trim(name))",
+     "verify": "derived"
+    },
+    {
+     "name": "aliases",
+     "type": "json",
+     "nullable": true,
+     "default": null,
+     "tally": "LANGUAGENAME.LIST/NAME.LIST/NAME",
+     "hint": "list_text_tail",
+     "verify": "legacy_seen",
+     "note": "all names after the first"
+    },
+    {
+     "name": "parent_name",
+     "type": "text",
+     "default": "",
+     "tally": "PARENT",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "group_guid",
+     "type": "text",
+     "default": "",
+     "derive": "resolve parent_name -> tm_group.guid",
+     "verify": "derived"
+    },
+    {
+     "name": "reserved_root",
+     "type": "text",
+     "default": "",
+     "derive": "reserved_root of the ledger group (copied for fast filtering)",
+     "verify": "derived"
+    },
+    {
+     "name": "opening_balance",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "money",
+     "default": "0.00",
+     "tally": "OPENINGBALANCE",
+     "hint": "amount",
+     "verify": "legacy_seen",
+     "note": "signed, Dr negative"
+    },
+    {
+     "name": "closing_balance",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "money",
+     "default": "0.00",
+     "tally": "CLOSINGBALANCE",
+     "hint": "amount",
+     "verify": "legacy_seen",
+     "note": "as Tally reports it for the sync window end; signed"
+    },
+    {
+     "name": "closing_as_of",
+     "type": "date",
+     "nullable": true,
+     "default": null,
+     "derive": "date closing_balance was read",
+     "verify": "derived"
+    },
+    {
+     "name": "is_billwise_on",
+     "type": "bool",
+     "default": false,
+     "tally": "ISBILLWISEON",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "credit_period_days",
+     "type": "int",
+     "default": 0,
+     "tally": "BILLCREDITPERIOD",
+     "hint": "days",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "credit_limit",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "money",
+     "default": "0.00",
+     "tally": "CREDITLIMIT",
+     "hint": "amount",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "gst_registration_type",
+     "type": "text",
+     "default": "",
+     "tally": "GSTREGISTRATIONTYPE",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "gstin",
+     "type": "text",
+     "default": "",
+     "tally": "PARTYGSTIN",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "state_name",
+     "type": "text",
+     "default": "",
+     "tally": "LEDSTATENAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "country",
+     "type": "text",
+     "default": "",
+     "tally": "COUNTRYNAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "pincode",
+     "type": "text",
+     "default": "",
+     "tally": "PINCODE",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "email",
+     "type": "text",
+     "default": "",
+     "tally": "EMAIL",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "email_cc",
+     "type": "text",
+     "default": "",
+     "tally": "EMAILCC",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "phone",
+     "type": "text",
+     "default": "",
+     "tally": "LEDGERPHONE",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "mobile",
+     "type": "text",
+     "default": "",
+     "tally": "LEDGERMOBILE",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "contact_person",
+     "type": "text",
+     "default": "",
+     "tally": "LEDGERCONTACT",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "pan",
+     "type": "text",
+     "default": "",
+     "tally": "INCOMETAXNUMBER",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "description",
+     "type": "text",
+     "default": "",
+     "tally": "DESCRIPTION",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "price_level",
+     "type": "text",
+     "default": "",
+     "tally": "PRICELEVEL",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "bank_name",
+     "type": "text",
+     "default": "",
+     "tally": "BANKINGCONFIGBANK",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "bank_account_no",
+     "type": "text",
+     "default": "",
+     "tally": "BANKDETAILS",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "bank_branch",
+     "type": "text",
+     "default": "",
+     "tally": "BANKBRANCHNAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "bank_ifsc",
+     "type": "text",
+     "default": "",
+     "tally": "IFSCODE",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "bank_acc_holder",
+     "type": "text",
+     "default": "",
+     "tally": "BANKACCHOLDERNAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "tax_type",
+     "type": "text",
+     "default": "",
+     "tally": "TAXTYPE",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "gst_duty_head",
+     "type": "text",
+     "default": "",
+     "tally": "GSTDUTYHEAD",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "gst_rate",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "pct",
+     "default": "0.00",
+     "tally": "RATEOFTAXCALCULATION",
+     "hint": "amount",
+     "verify": "legacy_seen",
+     "note": "rate for tax ledgers (duty ledgers)"
+    },
+    {
+     "name": "gst_type_of_supply",
+     "type": "text",
+     "default": "",
+     "tally": "GSTTYPEOFSUPPLY",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "rounding_method",
+     "type": "text",
+     "default": "",
+     "tally": "ROUNDINGMETHOD",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "rounding_limit",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "money",
+     "default": "0.00",
+     "tally": "ROUNDINGLIMIT",
+     "hint": "amount",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "is_cost_centres_on",
+     "type": "bool",
+     "default": false,
+     "tally": "ISCOSTCENTRESON",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "address",
+     "type": "json",
+     "nullable": true,
+     "default": null,
+     "tally": "ADDRESS.LIST",
+     "hint": "list_text",
+     "verify": "legacy_seen",
+     "note": "current mailing address lines"
+    },
+    {
+     "name": "alter_id",
+     "type": "int",
+     "default": 0,
+     "tally": "ALTERID",
+     "hint": "int",
+     "verify": "legacy_seen"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_name",
+     "columns": [
+      "company_guid",
+      "name_lc"
+     ]
+    },
+    {
+     "name": "by_group",
+     "columns": [
+      "company_guid",
+      "group_guid"
+     ]
+    },
+    {
+     "name": "by_root",
+     "columns": [
+      "company_guid",
+      "reserved_root"
+     ]
+    },
+    {
+     "name": "by_gstin",
+     "columns": [
+      "company_guid",
+      "gstin"
+     ]
+    }
+   ],
+   "scope": "full_refresh",
+   "tally": {
+    "request": "LBLedgers",
+    "type": "Ledger",
+    "object": "LEDGER"
+   },
+   "children": [
+    {
+     "table": "tm_ledger_address",
+     "fk": {
+      "ledger_guid": "guid"
+     }
+    },
+    {
+     "table": "tm_ledger_contact",
+     "fk": {
+      "ledger_guid": "guid"
+     }
+    },
+    {
+     "table": "tm_ledger_gst",
+     "fk": {
+      "ledger_guid": "guid"
+     }
+    },
+    {
+     "table": "tm_ledger_opening_bill",
+     "fk": {
+      "ledger_guid": "guid"
+     }
+    }
+   ]
+  },
+  "tm_ledger_address": {
+   "group": "master",
+   "description": "",
+   "primary_key": [
+    "company_guid",
+    "ledger_guid",
+    "addr_index"
+   ],
+   "columns": [
+    {
+     "name": "company_guid",
+     "type": "text",
+     "default": "",
+     "derive": "company_guid",
+     "verify": "derived"
+    },
+    {
+     "name": "ledger_guid",
+     "type": "text",
+     "default": "",
+     "derive": "parent ledger guid",
+     "verify": "derived"
+    },
+    {
+     "name": "addr_index",
+     "type": "int",
+     "default": 0,
+     "derive": "position in LEDMAILINGDETAILS.LIST, 0-based",
+     "verify": "derived"
+    },
+    {
+     "name": "applicable_from",
+     "type": "date",
+     "nullable": true,
+     "default": null,
+     "tally": "APPLICABLEFROM",
+     "hint": "tally_date",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "mailing_name",
+     "type": "text",
+     "default": "",
+     "tally": "MAILINGNAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "lines",
+     "type": "json",
+     "nullable": true,
+     "default": null,
+     "tally": "ADDRESS.LIST",
+     "hint": "list_text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "state_name",
+     "type": "text",
+     "default": "",
+     "tally": "STATE",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "country",
+     "type": "text",
+     "default": "",
+     "tally": "COUNTRY",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "pincode",
+     "type": "text",
+     "default": "",
+     "tally": "PINCODE",
+     "hint": "text",
+     "verify": "legacy_seen"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_ledger",
+     "columns": [
+      "company_guid",
+      "ledger_guid"
+     ]
+    }
+   ],
+   "scope": "follows_parent",
+   "tally": {
+    "request": "LBLedgers",
+    "type": "Ledger",
+    "object": "LEDGER",
+    "rows": "list:LEDMAILINGDETAILS.LIST"
+   },
+   "parent": {
+    "table": "tm_ledger",
+    "fk": {
+     "ledger_guid": "guid"
+    }
+   }
+  },
+  "tm_ledger_contact": {
+   "group": "master",
+   "description": "",
+   "primary_key": [
+    "company_guid",
+    "ledger_guid",
+    "contact_index"
+   ],
+   "columns": [
+    {
+     "name": "company_guid",
+     "type": "text",
+     "default": "",
+     "derive": "company_guid",
+     "verify": "derived"
+    },
+    {
+     "name": "ledger_guid",
+     "type": "text",
+     "default": "",
+     "derive": "parent ledger guid",
+     "verify": "derived"
+    },
+    {
+     "name": "contact_index",
+     "type": "int",
+     "default": 0,
+     "derive": "0-based",
+     "verify": "derived"
+    },
+    {
+     "name": "name",
+     "type": "text",
+     "default": "",
+     "tally": "LEDGERCONTACT",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "phone",
+     "type": "text",
+     "default": "",
+     "tally": "LEDGERPHONE",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "mobile",
+     "type": "text",
+     "default": "",
+     "tally": "LEDGERMOBILE",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "email",
+     "type": "text",
+     "default": "",
+     "tally": "EMAIL",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "designation",
+     "type": "text",
+     "default": "",
+     "tally": "DESIGNATION",
+     "hint": "text",
+     "verify": "assumed"
+    },
+    {
+     "name": "is_primary",
+     "type": "bool",
+     "default": false,
+     "derive": "first contact",
+     "verify": "derived"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_ledger",
+     "columns": [
+      "company_guid",
+      "ledger_guid"
+     ]
+    }
+   ],
+   "scope": "follows_parent",
+   "tally": {
+    "request": "LBLedgers",
+    "type": "Ledger",
+    "object": "LEDGER",
+    "rows": "single"
+   },
+   "parent": {
+    "table": "tm_ledger",
+    "fk": {
+     "ledger_guid": "guid"
+    }
+   },
+   "note": "v1: one row per ledger built from the ledger-level contact fields when any is non-empty; extra contacts arrive only if a later contract adds multi-contact export"
+  },
+  "tm_ledger_gst": {
+   "group": "master",
+   "description": "",
+   "primary_key": [
+    "company_guid",
+    "ledger_guid",
+    "applicable_from"
+   ],
+   "columns": [
+    {
+     "name": "company_guid",
+     "type": "text",
+     "default": "",
+     "derive": "company_guid",
+     "verify": "derived"
+    },
+    {
+     "name": "ledger_guid",
+     "type": "text",
+     "default": "",
+     "derive": "parent ledger guid",
+     "verify": "derived"
+    },
+    {
+     "name": "applicable_from",
+     "type": "date",
+     "default": "1900-01-01",
+     "tally": "APPLICABLEFROM",
+     "hint": "tally_date",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "gst_registration_type",
+     "type": "text",
+     "default": "",
+     "tally": "GSTREGISTRATIONTYPE",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "gstin",
+     "type": "text",
+     "default": "",
+     "tally": "GSTIN",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "place_of_supply",
+     "type": "text",
+     "default": "",
+     "tally": "PLACEOFSUPPLY",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "is_other_territory",
+     "type": "bool",
+     "default": false,
+     "tally": "ISOTHTERRITORYASSESSEE",
+     "hint": "yesno",
+     "verify": "assumed"
+    },
+    {
+     "name": "is_transporter",
+     "type": "bool",
+     "default": false,
+     "tally": "ISTRANSPORTER",
+     "hint": "yesno",
+     "verify": "assumed"
+    },
+    {
+     "name": "transporter_id",
+     "type": "text",
+     "default": "",
+     "tally": "TRANSPORTERID",
+     "hint": "text",
+     "verify": "assumed"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_ledger",
+     "columns": [
+      "company_guid",
+      "ledger_guid"
+     ]
+    }
+   ],
+   "scope": "follows_parent",
+   "tally": {
+    "request": "LBLedgers",
+    "type": "Ledger",
+    "object": "LEDGER",
+    "rows": "list:LEDGSTREGDETAILS.LIST"
+   },
+   "parent": {
+    "table": "tm_ledger",
+    "fk": {
+     "ledger_guid": "guid"
+    }
+   }
+  },
+  "tm_ledger_opening_bill": {
+   "group": "master",
+   "description": "Opening bill-wise balances; the starting point of outstanding.",
+   "primary_key": [
+    "company_guid",
+    "ledger_guid",
+    "bill_index"
+   ],
+   "columns": [
+    {
+     "name": "company_guid",
+     "type": "text",
+     "default": "",
+     "derive": "company_guid",
+     "verify": "derived"
+    },
+    {
+     "name": "ledger_guid",
+     "type": "text",
+     "default": "",
+     "derive": "parent ledger guid",
+     "verify": "derived"
+    },
+    {
+     "name": "bill_index",
+     "type": "int",
+     "default": 0,
+     "derive": "0-based position in the ledger BILLALLOCATIONS.LIST",
+     "verify": "derived"
+    },
+    {
+     "name": "bill_name",
+     "type": "text",
+     "default": "",
+     "tally": "NAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "bill_date",
+     "type": "date",
+     "default": "1900-01-01",
+     "tally": "BILLDATE",
+     "hint": "tally_date",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "credit_period_days",
+     "type": "int",
+     "default": 0,
+     "tally": "BILLCREDITPERIOD",
+     "hint": "days",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "amount",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "money",
+     "default": "0.00",
+     "tally": "OPENINGBALANCE",
+     "hint": "amount",
+     "verify": "legacy_seen",
+     "note": "signed, Dr negative (receivable negative)"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_ledger",
+     "columns": [
+      "company_guid",
+      "ledger_guid"
+     ]
+    },
+    {
+     "name": "by_ledger_bill",
+     "columns": [
+      "company_guid",
+      "ledger_guid",
+      "bill_name"
+     ]
+    }
+   ],
+   "scope": "follows_parent",
+   "tally": {
+    "request": "LBLedgers",
+    "type": "Ledger",
+    "object": "LEDGER",
+    "rows": "list:BILLALLOCATIONS.LIST"
+   },
+   "parent": {
+    "table": "tm_ledger",
+    "fk": {
+     "ledger_guid": "guid"
+    }
+   }
+  },
+  "tm_voucher_type": {
+   "group": "master",
+   "description": "",
+   "primary_key": [
+    "company_guid",
+    "guid"
+   ],
+   "columns": [
+    {
+     "name": "company_guid",
+     "type": "text",
+     "default": "",
+     "derive": "company_guid",
+     "verify": "derived"
+    },
+    {
+     "name": "guid",
+     "type": "text",
+     "default": "",
+     "tally": "GUID",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "name",
+     "type": "text",
+     "default": "",
+     "tally": "@NAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "name_lc",
+     "type": "text",
+     "default": "",
+     "derive": "lower(trim(name))",
+     "verify": "derived"
+    },
+    {
+     "name": "parent_name",
+     "type": "text",
+     "default": "",
+     "tally": "PARENT",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "base_kind",
+     "type": "text",
+     "default": "",
+     "derive": "walk parent_name chain until a name equals ref_voucher_kind.tally_name (case-insensitive); else unknown",
+     "verify": "derived"
+    },
+    {
+     "name": "numbering_method",
+     "type": "text",
+     "default": "",
+     "tally": "NUMBERINGMETHOD",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "prevent_duplicates",
+     "type": "bool",
+     "default": false,
+     "tally": "PREVENTDUPLICATES",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "use_for_pos_invoice",
+     "type": "bool",
+     "default": false,
+     "tally": "USEFORPOSINVOICE",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "classes",
+     "type": "json",
+     "nullable": true,
+     "default": null,
+     "tally": "VOUCHERCLASSLIST.LIST",
+     "hint": "json_list",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "number_series",
+     "type": "json",
+     "nullable": true,
+     "default": null,
+     "tally": "VOUCHERNUMBERSERIES.LIST",
+     "hint": "json_list",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "alter_id",
+     "type": "int",
+     "default": 0,
+     "tally": "ALTERID",
+     "hint": "int",
+     "verify": "legacy_seen"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_name",
+     "columns": [
+      "company_guid",
+      "name_lc"
+     ]
+    },
+    {
+     "name": "by_kind",
+     "columns": [
+      "company_guid",
+      "base_kind"
+     ]
+    }
+   ],
+   "scope": "full_refresh",
+   "tally": {
+    "request": "LBVoucherTypes",
+    "type": "VoucherType",
+    "object": "VOUCHERTYPE"
+   }
+  },
+  "tm_stock_group": {
+   "group": "master",
+   "description": "",
+   "primary_key": [
+    "company_guid",
+    "guid"
+   ],
+   "columns": [
+    {
+     "name": "company_guid",
+     "type": "text",
+     "default": "",
+     "derive": "company_guid",
+     "verify": "derived"
+    },
+    {
+     "name": "guid",
+     "type": "text",
+     "default": "",
+     "tally": "GUID",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "name",
+     "type": "text",
+     "default": "",
+     "tally": "@NAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "name_lc",
+     "type": "text",
+     "default": "",
+     "derive": "lower(trim(name))",
+     "verify": "derived"
+    },
+    {
+     "name": "parent_name",
+     "type": "text",
+     "default": "",
+     "tally": "PARENT",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "parent_guid",
+     "type": "text",
+     "default": "",
+     "derive": "resolve via tm_stock_group",
+     "verify": "derived"
+    },
+    {
+     "name": "base_units",
+     "type": "text",
+     "default": "",
+     "tally": "BASEUNITS",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "costing_method",
+     "type": "text",
+     "default": "",
+     "tally": "COSTINGMETHOD",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "valuation_method",
+     "type": "text",
+     "default": "",
+     "tally": "VALUATIONMETHOD",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "is_batch_wise",
+     "type": "bool",
+     "default": false,
+     "tally": "ISBATCHWISEON",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "is_perishable",
+     "type": "bool",
+     "default": false,
+     "tally": "ISPERISHABLEON",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "ignore_negative_stock",
+     "type": "bool",
+     "default": false,
+     "tally": "IGNORENEGATIVESTOCK",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "alter_id",
+     "type": "int",
+     "default": 0,
+     "tally": "ALTERID",
+     "hint": "int",
+     "verify": "legacy_seen"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_name",
+     "columns": [
+      "company_guid",
+      "name_lc"
+     ]
+    }
+   ],
+   "scope": "full_refresh",
+   "tally": {
+    "request": "LBStockGroups",
+    "type": "StockGroup",
+    "object": "STOCKGROUP"
+   }
+  },
+  "tm_stock_category": {
+   "group": "master",
+   "description": "",
+   "primary_key": [
+    "company_guid",
+    "guid"
+   ],
+   "columns": [
+    {
+     "name": "company_guid",
+     "type": "text",
+     "default": "",
+     "derive": "company_guid",
+     "verify": "derived"
+    },
+    {
+     "name": "guid",
+     "type": "text",
+     "default": "",
+     "tally": "GUID",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "name",
+     "type": "text",
+     "default": "",
+     "tally": "@NAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "name_lc",
+     "type": "text",
+     "default": "",
+     "derive": "lower(trim(name))",
+     "verify": "derived"
+    },
+    {
+     "name": "parent_name",
+     "type": "text",
+     "default": "",
+     "tally": "PARENT",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "parent_guid",
+     "type": "text",
+     "default": "",
+     "derive": "resolve via tm_stock_category",
+     "verify": "derived"
+    },
+    {
+     "name": "alter_id",
+     "type": "int",
+     "default": 0,
+     "tally": "ALTERID",
+     "hint": "int",
+     "verify": "legacy_seen"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_name",
+     "columns": [
+      "company_guid",
+      "name_lc"
+     ]
+    }
+   ],
+   "scope": "full_refresh",
+   "tally": {
+    "request": "LBStockCategories",
+    "type": "StockCategory",
+    "object": "STOCKCATEGORY"
+   }
+  },
+  "tm_unit": {
+   "group": "master",
+   "description": "",
+   "primary_key": [
+    "company_guid",
+    "guid"
+   ],
+   "columns": [
+    {
+     "name": "company_guid",
+     "type": "text",
+     "default": "",
+     "derive": "company_guid",
+     "verify": "derived"
+    },
+    {
+     "name": "guid",
+     "type": "text",
+     "default": "",
+     "tally": "GUID",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "name",
+     "type": "text",
+     "default": "",
+     "tally": "@NAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "is_simple_unit",
+     "type": "bool",
+     "default": false,
+     "tally": "ISSIMPLEUNIT",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "base_unit",
+     "type": "text",
+     "default": "",
+     "tally": "BASEUNITS",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "additional_unit",
+     "type": "text",
+     "default": "",
+     "tally": "ADDITIONALUNITS",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "conversion",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "qty",
+     "default": "0.00",
+     "tally": "CONVERSION",
+     "hint": "amount",
+     "verify": "legacy_seen",
+     "note": "additional = conversion x base? see CALC_SPECS section 6"
+    },
+    {
+     "name": "decimal_places",
+     "type": "int",
+     "default": 0,
+     "tally": "DECIMALPLACES",
+     "hint": "int",
+     "verify": "assumed"
+    },
+    {
+     "name": "gst_uqc",
+     "type": "text",
+     "default": "",
+     "tally": "GSTREPUOM",
+     "hint": "text",
+     "verify": "legacy_seen",
+     "note": "GST unit quantity code, e.g. NOS"
+    },
+    {
+     "name": "alter_id",
+     "type": "int",
+     "default": 0,
+     "tally": "ALTERID",
+     "hint": "int",
+     "verify": "legacy_seen"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_name",
+     "columns": [
+      "company_guid",
+      "name"
+     ]
+    }
+   ],
+   "scope": "full_refresh",
+   "tally": {
+    "request": "LBUnits",
+    "type": "Unit",
+    "object": "UNIT"
+   }
+  },
+  "tm_godown": {
+   "group": "master",
+   "description": "",
+   "primary_key": [
+    "company_guid",
+    "guid"
+   ],
+   "columns": [
+    {
+     "name": "company_guid",
+     "type": "text",
+     "default": "",
+     "derive": "company_guid",
+     "verify": "derived"
+    },
+    {
+     "name": "guid",
+     "type": "text",
+     "default": "",
+     "tally": "GUID",
+     "hint": "text",
+     "verify": "legacy_seen",
+     "note": "Tally may give no GUID for godowns: key = 'n:'+name"
+    },
+    {
+     "name": "name",
+     "type": "text",
+     "default": "",
+     "tally": "@NAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "name_lc",
+     "type": "text",
+     "default": "",
+     "derive": "lower(trim(name))",
+     "verify": "derived"
+    },
+    {
+     "name": "parent_name",
+     "type": "text",
+     "default": "",
+     "tally": "PARENT",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "parent_guid",
+     "type": "text",
+     "default": "",
+     "derive": "resolve via tm_godown",
+     "verify": "derived"
+    },
+    {
+     "name": "address",
+     "type": "json",
+     "nullable": true,
+     "default": null,
+     "tally": "ADDRESS.LIST",
+     "hint": "list_text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "pincode",
+     "type": "text",
+     "default": "",
+     "tally": "PINCODE",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "phone",
+     "type": "text",
+     "default": "",
+     "tally": "PHONENUMBER",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "alter_id",
+     "type": "int",
+     "default": 0,
+     "tally": "ALTERID",
+     "hint": "int",
+     "verify": "legacy_seen"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_name",
+     "columns": [
+      "company_guid",
+      "name_lc"
+     ]
+    }
+   ],
+   "scope": "full_refresh",
+   "tally": {
+    "request": "LBGodowns",
+    "type": "Godown",
+    "object": "GODOWN"
+   }
+  },
+  "tm_stock_item": {
+   "group": "master",
+   "description": "",
+   "primary_key": [
+    "company_guid",
+    "guid"
+   ],
+   "columns": [
+    {
+     "name": "company_guid",
+     "type": "text",
+     "default": "",
+     "derive": "company_guid",
+     "verify": "derived"
+    },
+    {
+     "name": "guid",
+     "type": "text",
+     "default": "",
+     "tally": "GUID",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "name",
+     "type": "text",
+     "default": "",
+     "tally": "@NAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "name_lc",
+     "type": "text",
+     "default": "",
+     "derive": "lower(trim(name))",
+     "verify": "derived"
+    },
+    {
+     "name": "aliases",
+     "type": "json",
+     "nullable": true,
+     "default": null,
+     "tally": "LANGUAGENAME.LIST/NAME.LIST/NAME",
+     "hint": "list_text_tail",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "parent_name",
+     "type": "text",
+     "default": "",
+     "tally": "PARENT",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "parent_guid",
+     "type": "text",
+     "default": "",
+     "derive": "resolve via tm_stock_group",
+     "verify": "derived"
+    },
+    {
+     "name": "category_name",
+     "type": "text",
+     "default": "",
+     "tally": "CATEGORY",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "category_guid",
+     "type": "text",
+     "default": "",
+     "derive": "resolve via tm_stock_category",
+     "verify": "derived"
+    },
+    {
+     "name": "base_unit",
+     "type": "text",
+     "default": "",
+     "tally": "BASEUNITS",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "additional_unit",
+     "type": "text",
+     "default": "",
+     "tally": "ADDITIONALUNITS",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "denominator",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "qty",
+     "default": "0.00",
+     "tally": "DENOMINATOR",
+     "hint": "amount",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "conversion",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "qty",
+     "default": "0.00",
+     "tally": "CONVERSION",
+     "hint": "amount",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "opening_qty",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "qty",
+     "default": "0.00",
+     "tally": "OPENINGBALANCE",
+     "hint": "qty",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "opening_value",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "money",
+     "default": "0.00",
+     "tally": "OPENINGVALUE",
+     "hint": "amount",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "closing_qty",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "qty",
+     "default": "0.00",
+     "tally": "CLOSINGBALANCE",
+     "hint": "qty",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "closing_value",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "money",
+     "default": "0.00",
+     "tally": "CLOSINGVALUE",
+     "hint": "amount",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "closing_rate",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "rate",
+     "default": "0.00",
+     "derive": "closing_value / closing_qty when closing_qty > 0 else 0",
+     "verify": "derived",
+     "note": "derived on the connector and on the device"
+    },
+    {
+     "name": "closing_as_of",
+     "type": "date",
+     "nullable": true,
+     "default": null,
+     "derive": "date closing figures were read",
+     "verify": "derived"
+    },
+    {
+     "name": "last_sale_date",
+     "type": "date",
+     "nullable": true,
+     "default": null,
+     "tally": "LASTSALEDATE",
+     "hint": "tally_date",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "gst_applicable",
+     "type": "bool",
+     "default": false,
+     "tally": "GSTAPPLICABLE",
+     "hint": "yesno_applicable",
+     "verify": "legacy_seen",
+     "note": "Tally gives 'Applicable'/'Not Applicable'/'Undefined'; true only for 'Applicable'"
+    },
+    {
+     "name": "gst_type_of_supply",
+     "type": "text",
+     "default": "",
+     "tally": "GSTTYPEOFSUPPLY",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "hsn_code",
+     "type": "text",
+     "default": "",
+     "tally": "HSNDETAILS.LIST/HSNCODE",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "description",
+     "type": "text",
+     "default": "",
+     "tally": "DESCRIPTION",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "part_no",
+     "type": "text",
+     "default": "",
+     "tally": "PARTNO",
+     "hint": "text",
+     "verify": "assumed"
+    },
+    {
+     "name": "costing_method",
+     "type": "text",
+     "default": "",
+     "tally": "COSTINGMETHOD",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "valuation_method",
+     "type": "text",
+     "default": "",
+     "tally": "VALUATIONMETHOD",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "is_batch_wise",
+     "type": "bool",
+     "default": false,
+     "tally": "ISBATCHWISEON",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "is_perishable",
+     "type": "bool",
+     "default": false,
+     "tally": "ISPERISHABLEON",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "reorder_level",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "qty",
+     "default": "0.00",
+     "tally": "REORDERBASE",
+     "hint": "qty",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "min_order_qty",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "qty",
+     "default": "0.00",
+     "tally": "MINIMUMORDERBASE",
+     "hint": "qty",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "mrp",
+     "type": "json",
+     "nullable": true,
+     "default": null,
+     "tally": "MRPDETAILS.LIST",
+     "hint": "json_list",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "price_lists",
+     "type": "json",
+     "nullable": true,
+     "default": null,
+     "tally": "FULLPRICELIST.LIST",
+     "hint": "json_list",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "standard_cost",
+     "type": "json",
+     "nullable": true,
+     "default": null,
+     "tally": "STANDARDCOSTLIST.LIST",
+     "hint": "json_list",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "alter_id",
+     "type": "int",
+     "default": 0,
+     "tally": "ALTERID",
+     "hint": "int",
+     "verify": "legacy_seen"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_name",
+     "columns": [
+      "company_guid",
+      "name_lc"
+     ]
+    },
+    {
+     "name": "by_parent",
+     "columns": [
+      "company_guid",
+      "parent_guid"
+     ]
+    },
+    {
+     "name": "by_category",
+     "columns": [
+      "company_guid",
+      "category_guid"
+     ]
+    }
+   ],
+   "scope": "full_refresh",
+   "tally": {
+    "request": "LBStockItems",
+    "type": "StockItem",
+    "object": "STOCKITEM"
+   },
+   "children": [
+    {
+     "table": "tm_stock_item_gst",
+     "fk": {
+      "stock_item_guid": "guid"
+     }
+    },
+    {
+     "table": "tm_stock_batch_opening",
+     "fk": {
+      "stock_item_guid": "guid"
+     }
+    }
+   ]
+  },
+  "tm_stock_item_gst": {
+   "group": "master",
+   "description": "",
+   "primary_key": [
+    "company_guid",
+    "stock_item_guid",
+    "applicable_from"
+   ],
+   "columns": [
+    {
+     "name": "company_guid",
+     "type": "text",
+     "default": "",
+     "derive": "company_guid",
+     "verify": "derived"
+    },
+    {
+     "name": "stock_item_guid",
+     "type": "text",
+     "default": "",
+     "derive": "parent stock item guid",
+     "verify": "derived"
+    },
+    {
+     "name": "applicable_from",
+     "type": "date",
+     "default": "1900-01-01",
+     "tally": "APPLICABLEFROM",
+     "hint": "tally_date",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "hsn_code",
+     "type": "text",
+     "default": "",
+     "tally": "HSNCODE",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "taxability",
+     "type": "text",
+     "default": "",
+     "tally": "TAXABILITY",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "calc_type",
+     "type": "text",
+     "default": "",
+     "tally": "GSTCALCSLABONMRP",
+     "hint": "text",
+     "verify": "assumed"
+    },
+    {
+     "name": "is_reverse_charge",
+     "type": "bool",
+     "default": false,
+     "tally": "REVERSECHARGEAPPLICABLE",
+     "hint": "yesno",
+     "verify": "assumed"
+    },
+    {
+     "name": "igst_rate",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "pct",
+     "default": "0.00",
+     "derive": "RATEDETAILS.LIST row where GSTRATEDUTYHEAD = IGST -> GSTRATE",
+     "verify": "derived",
+     "note": "flattened from STATEWISEDETAILS.LIST/RATEDETAILS.LIST (first state row, i.e. Any)"
+    },
+    {
+     "name": "cgst_rate",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "pct",
+     "default": "0.00",
+     "derive": "same, head CGST",
+     "verify": "derived"
+    },
+    {
+     "name": "sgst_rate",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "pct",
+     "default": "0.00",
+     "derive": "same, head State Tax / SGST",
+     "verify": "derived"
+    },
+    {
+     "name": "cess_rate",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "pct",
+     "default": "0.00",
+     "derive": "same, head Cess",
+     "verify": "derived"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_item",
+     "columns": [
+      "company_guid",
+      "stock_item_guid"
+     ]
+    }
+   ],
+   "scope": "follows_parent",
+   "tally": {
+    "request": "LBStockItems",
+    "type": "StockItem",
+    "object": "STOCKITEM",
+    "rows": "list:GSTDETAILS.LIST"
+   },
+   "parent": {
+    "table": "tm_stock_item",
+    "fk": {
+     "stock_item_guid": "guid"
+    }
+   }
+  },
+  "tm_stock_batch_opening": {
+   "group": "master",
+   "description": "Opening stock per item, godown and batch. Items without batches get one row with batch_name = Primary Batch per godown that holds opening stock.",
+   "primary_key": [
+    "company_guid",
+    "stock_item_guid",
+    "godown_name",
+    "batch_name"
+   ],
+   "columns": [
+    {
+     "name": "company_guid",
+     "type": "text",
+     "default": "",
+     "derive": "company_guid",
+     "verify": "derived"
+    },
+    {
+     "name": "stock_item_guid",
+     "type": "text",
+     "default": "",
+     "derive": "parent stock item guid",
+     "verify": "derived"
+    },
+    {
+     "name": "godown_name",
+     "type": "text",
+     "default": "",
+     "tally": "GODOWNNAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "godown_guid",
+     "type": "text",
+     "default": "",
+     "derive": "resolve via tm_godown",
+     "verify": "derived"
+    },
+    {
+     "name": "batch_name",
+     "type": "text",
+     "default": "",
+     "tally": "BATCHNAME",
+     "hint": "text",
+     "verify": "legacy_seen",
+     "note": "'Primary Batch' is Tally's default batch name; keep as given"
+    },
+    {
+     "name": "opening_qty",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "qty",
+     "default": "0.00",
+     "tally": "OPENINGBALANCE",
+     "hint": "qty",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "opening_value",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "money",
+     "default": "0.00",
+     "tally": "OPENINGVALUE",
+     "hint": "amount",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "mfg_date",
+     "type": "date",
+     "nullable": true,
+     "default": null,
+     "tally": "MFDON",
+     "hint": "tally_date",
+     "verify": "assumed"
+    },
+    {
+     "name": "expiry_date",
+     "type": "date",
+     "nullable": true,
+     "default": null,
+     "tally": "EXPIRYPERIOD",
+     "hint": "tally_date",
+     "verify": "assumed"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_item",
+     "columns": [
+      "company_guid",
+      "stock_item_guid"
+     ]
+    },
+    {
+     "name": "by_godown",
+     "columns": [
+      "company_guid",
+      "godown_guid"
+     ]
+    }
+   ],
+   "scope": "follows_parent",
+   "tally": {
+    "request": "LBStockItems",
+    "type": "StockItem",
+    "object": "STOCKITEM",
+    "rows": "list:BATCHALLOCATIONS.LIST"
+   },
+   "parent": {
+    "table": "tm_stock_item",
+    "fk": {
+     "stock_item_guid": "guid"
+    }
+   }
+  },
+  "tm_cost_centre": {
+   "group": "master",
+   "description": "",
+   "primary_key": [
+    "company_guid",
+    "guid"
+   ],
+   "columns": [
+    {
+     "name": "company_guid",
+     "type": "text",
+     "default": "",
+     "derive": "company_guid",
+     "verify": "derived"
+    },
+    {
+     "name": "guid",
+     "type": "text",
+     "default": "",
+     "tally": "GUID",
+     "hint": "text",
+     "verify": "legacy_seen",
+     "note": "fallback key 'n:'+name"
+    },
+    {
+     "name": "name",
+     "type": "text",
+     "default": "",
+     "tally": "@NAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "name_lc",
+     "type": "text",
+     "default": "",
+     "derive": "lower(trim(name))",
+     "verify": "derived"
+    },
+    {
+     "name": "parent_name",
+     "type": "text",
+     "default": "",
+     "tally": "PARENT",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "category_name",
+     "type": "text",
+     "default": "",
+     "tally": "CATEGORY",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "for_payroll",
+     "type": "bool",
+     "default": false,
+     "tally": "FORPAYROLL",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "is_employee_group",
+     "type": "bool",
+     "default": false,
+     "tally": "ISEMPLOYEEGROUP",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "alter_id",
+     "type": "int",
+     "default": 0,
+     "tally": "ALTERID",
+     "hint": "int",
+     "verify": "legacy_seen"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_name",
+     "columns": [
+      "company_guid",
+      "name_lc"
+     ]
+    }
+   ],
+   "scope": "full_refresh",
+   "tally": {
+    "request": "LBCostCentres",
+    "type": "CostCentre",
+    "object": "COSTCENTRE"
+   }
+  },
+  "tm_currency": {
+   "group": "master",
+   "description": "",
+   "primary_key": [
+    "company_guid",
+    "guid"
+   ],
+   "columns": [
+    {
+     "name": "company_guid",
+     "type": "text",
+     "default": "",
+     "derive": "company_guid",
+     "verify": "derived"
+    },
+    {
+     "name": "guid",
+     "type": "text",
+     "default": "",
+     "tally": "GUID",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "name",
+     "type": "text",
+     "default": "",
+     "tally": "@NAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "formal_name",
+     "type": "text",
+     "default": "",
+     "tally": "MAILINGNAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "symbol",
+     "type": "text",
+     "default": "",
+     "tally": "ORIGINALSYMBOL",
+     "hint": "text",
+     "verify": "assumed"
+    },
+    {
+     "name": "decimal_places",
+     "type": "int",
+     "default": 2,
+     "tally": "DECIMALPLACES",
+     "hint": "int",
+     "verify": "assumed"
+    },
+    {
+     "name": "alter_id",
+     "type": "int",
+     "default": 0,
+     "tally": "ALTERID",
+     "hint": "int",
+     "verify": "legacy_seen"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_name",
+     "columns": [
+      "company_guid",
+      "name"
+     ]
+    }
+   ],
+   "scope": "full_refresh",
+   "tally": {
+    "request": "LBCurrencies",
+    "type": "Currency",
+    "object": "CURRENCY"
+   }
+  },
+  "tm_employee": {
+   "group": "master",
+   "description": "",
+   "primary_key": [
+    "company_guid",
+    "guid"
+   ],
+   "columns": [
+    {
+     "name": "company_guid",
+     "type": "text",
+     "default": "",
+     "derive": "company_guid",
+     "verify": "derived"
+    },
+    {
+     "name": "guid",
+     "type": "text",
+     "default": "",
+     "tally": "GUID",
+     "hint": "text",
+     "verify": "legacy_seen",
+     "note": "fallback key 'n:'+name"
+    },
+    {
+     "name": "name",
+     "type": "text",
+     "default": "",
+     "tally": "@NAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "name_lc",
+     "type": "text",
+     "default": "",
+     "derive": "lower(trim(name))",
+     "verify": "derived"
+    },
+    {
+     "name": "parent_name",
+     "type": "text",
+     "default": "",
+     "tally": "PARENT",
+     "hint": "text",
+     "verify": "legacy_seen",
+     "note": "employee group"
+    },
+    {
+     "name": "employee_number",
+     "type": "text",
+     "default": "",
+     "tally": "EMPLOYEENUMBER",
+     "hint": "text",
+     "verify": "assumed"
+    },
+    {
+     "name": "designation",
+     "type": "text",
+     "default": "",
+     "tally": "DESIGNATION",
+     "hint": "text",
+     "verify": "assumed"
+    },
+    {
+     "name": "date_of_joining",
+     "type": "date",
+     "nullable": true,
+     "default": null,
+     "tally": "DATEOFJOINING",
+     "hint": "tally_date",
+     "verify": "assumed"
+    },
+    {
+     "name": "pan",
+     "type": "text",
+     "default": "",
+     "tally": "INCOMETAXNUMBER",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "mobile",
+     "type": "text",
+     "default": "",
+     "tally": "CONTACTNUMBERS",
+     "hint": "text",
+     "verify": "assumed"
+    },
+    {
+     "name": "alter_id",
+     "type": "int",
+     "default": 0,
+     "tally": "ALTERID",
+     "hint": "int",
+     "verify": "legacy_seen"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_name",
+     "columns": [
+      "company_guid",
+      "name_lc"
+     ]
+    }
+   ],
+   "scope": "full_refresh",
+   "tally": {
+    "request": "LBEmployees",
+    "type": "Employee",
+    "object": "EMPLOYEE"
+   }
+  },
+  "tm_gst_registration": {
+   "group": "master",
+   "description": "",
+   "primary_key": [
+    "company_guid",
+    "guid"
+   ],
+   "columns": [
+    {
+     "name": "company_guid",
+     "type": "text",
+     "default": "",
+     "derive": "company_guid",
+     "verify": "derived"
+    },
+    {
+     "name": "guid",
+     "type": "text",
+     "default": "",
+     "tally": "GUID",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "name",
+     "type": "text",
+     "default": "",
+     "tally": "@NAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "gstin",
+     "type": "text",
+     "default": "",
+     "tally": "GSTREGNUMBER",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "state_name",
+     "type": "text",
+     "default": "",
+     "tally": "GSTDETAILS.LIST/STATENAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "registration_type",
+     "type": "text",
+     "default": "",
+     "tally": "GSTDETAILS.LIST/GSTREGISTRATIONTYPE",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "applicable_from",
+     "type": "date",
+     "nullable": true,
+     "default": null,
+     "tally": "GSTDETAILS.LIST/APPLICABLEFROM",
+     "hint": "tally_date",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "alter_id",
+     "type": "int",
+     "default": 0,
+     "tally": "ALTERID",
+     "hint": "int",
+     "verify": "legacy_seen"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_gstin",
+     "columns": [
+      "company_guid",
+      "gstin"
+     ]
+    }
+   ],
+   "scope": "full_refresh",
+   "tally": {
+    "request": "LBTaxUnits",
+    "type": "TaxUnit",
+    "object": "TAXUNIT"
+   }
+  },
+  "tx_voucher": {
+   "group": "transaction",
+   "description": "Voucher header. Deleted vouchers are removed from the vault, never stored with a deleted flag.",
+   "primary_key": [
+    "company_guid",
+    "guid"
+   ],
+   "columns": [
+    {
+     "name": "company_guid",
+     "type": "text",
+     "default": "",
+     "derive": "company_guid",
+     "verify": "derived"
+    },
+    {
+     "name": "guid",
+     "type": "text",
+     "default": "",
+     "tally": "GUID",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "alter_id",
+     "type": "int",
+     "default": 0,
+     "tally": "ALTERID",
+     "hint": "int",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "master_id",
+     "type": "int",
+     "default": 0,
+     "tally": "MASTERID",
+     "hint": "int",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "voucher_type_name",
+     "type": "text",
+     "default": "",
+     "tally": "VOUCHERTYPENAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "voucher_type_guid",
+     "type": "text",
+     "default": "",
+     "derive": "resolve name -> tm_voucher_type.guid",
+     "verify": "derived"
+    },
+    {
+     "name": "kind",
+     "type": "text",
+     "default": "",
+     "derive": "tm_voucher_type.base_kind of the resolved type; unknown when unresolved",
+     "verify": "derived"
+    },
+    {
+     "name": "date",
+     "type": "date",
+     "default": "1900-01-01",
+     "tally": "DATE",
+     "hint": "tally_date",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "effective_date",
+     "type": "date",
+     "nullable": true,
+     "default": null,
+     "tally": "EFFECTIVEDATE",
+     "hint": "tally_date",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "number",
+     "type": "text",
+     "default": "",
+     "tally": "VOUCHERNUMBER",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "reference",
+     "type": "text",
+     "default": "",
+     "tally": "REFERENCE",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "reference_date",
+     "type": "date",
+     "nullable": true,
+     "default": null,
+     "tally": "REFERENCEDATE",
+     "hint": "tally_date",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "narration",
+     "type": "text",
+     "default": "",
+     "tally": "NARRATION",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "party_name",
+     "type": "text",
+     "default": "",
+     "tally": "PARTYLEDGERNAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "party_guid",
+     "type": "text",
+     "default": "",
+     "derive": "resolve party_name -> tm_ledger.guid",
+     "verify": "derived"
+    },
+    {
+     "name": "party_gstin",
+     "type": "text",
+     "default": "",
+     "tally": "PARTYGSTIN",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "company_gstin",
+     "type": "text",
+     "default": "",
+     "tally": "CMPGSTIN",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "place_of_supply",
+     "type": "text",
+     "default": "",
+     "tally": "PLACEOFSUPPLY",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "state_name",
+     "type": "text",
+     "default": "",
+     "tally": "STATENAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "consignee_name",
+     "type": "text",
+     "default": "",
+     "tally": "CONSIGNEEMAILINGNAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "consignee_gstin",
+     "type": "text",
+     "default": "",
+     "tally": "CONSIGNEEGSTIN",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "consignee_state",
+     "type": "text",
+     "default": "",
+     "tally": "CONSIGNEESTATENAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "buyer_name",
+     "type": "text",
+     "default": "",
+     "tally": "BASICBUYERNAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "address",
+     "type": "json",
+     "nullable": true,
+     "default": null,
+     "tally": "ADDRESS.LIST",
+     "hint": "list_text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "is_invoice",
+     "type": "bool",
+     "default": false,
+     "tally": "ISINVOICE",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "is_optional",
+     "type": "bool",
+     "default": false,
+     "tally": "ISOPTIONAL",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "is_cancelled",
+     "type": "bool",
+     "default": false,
+     "tally": "ISCANCELLED",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "is_void",
+     "type": "bool",
+     "default": false,
+     "tally": "ISVOID",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "is_postdated",
+     "type": "bool",
+     "default": false,
+     "tally": "ISPOSTDATED",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "is_on_hold",
+     "type": "bool",
+     "default": false,
+     "tally": "ISONHOLD",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "is_reverse_charge",
+     "type": "bool",
+     "default": false,
+     "tally": "ISREVERSECHARGEAPPLICABLE",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "gst_registration_type",
+     "type": "text",
+     "default": "",
+     "tally": "GSTREGISTRATIONTYPE",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "counts_in_books",
+     "type": "bool",
+     "default": false,
+     "derive": "not (is_cancelled or is_optional or is_void); kind-specific effects are looked up in ref_voucher_kind by the calculators",
+     "verify": "derived"
+    },
+    {
+     "name": "amount",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "money",
+     "default": "0.00",
+     "derive": "headline amount >= 0: invoice kinds = abs(party line); receipt/payment = abs(party lines); others = sum of debit lines (CALC_SPECS section 3)",
+     "verify": "derived"
+    },
+    {
+     "name": "due_days",
+     "type": "int",
+     "default": 0,
+     "tally": "BASICDUEDATEOFPYMT",
+     "hint": "days",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "order_ref",
+     "type": "text",
+     "default": "",
+     "tally": "BASICORDERREF",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "remote_id",
+     "type": "text",
+     "default": "",
+     "tally": "@REMOTEID",
+     "hint": "text",
+     "verify": "assumed",
+     "note": "LazyBooks stores entry_queue.client_request_id here"
+    },
+    {
+     "name": "entered_by",
+     "type": "text",
+     "default": "",
+     "tally": "ENTEREDBY",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "irn",
+     "type": "text",
+     "default": "",
+     "tally": "IRN",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "irn_ack_no",
+     "type": "text",
+     "default": "",
+     "tally": "IRNACKNO",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "irn_ack_date",
+     "type": "text",
+     "default": "",
+     "tally": "IRNACKDATE",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "irn_cancelled",
+     "type": "bool",
+     "default": false,
+     "tally": "IRNCANCELLED",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "eway_bill_no",
+     "type": "text",
+     "default": "",
+     "tally": "EWAYBILLDETAILS.LIST/EWAYBILLNO",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "eway",
+     "type": "json",
+     "nullable": true,
+     "default": null,
+     "tally": "EWAYBILLDETAILS.LIST",
+     "hint": "json_list",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "godown_source",
+     "type": "text",
+     "default": "",
+     "tally": "VOUCHERSOURCEGODOWN",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "godown_destination",
+     "type": "text",
+     "default": "",
+     "tally": "VOUCHERDESTINATIONGODOWN",
+     "hint": "text",
+     "verify": "legacy_seen"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_date",
+     "columns": [
+      "company_guid",
+      "date"
+     ]
+    },
+    {
+     "name": "by_kind_date",
+     "columns": [
+      "company_guid",
+      "kind",
+      "date"
+     ]
+    },
+    {
+     "name": "by_party_date",
+     "columns": [
+      "company_guid",
+      "party_guid",
+      "date"
+     ]
+    },
+    {
+     "name": "by_number",
+     "columns": [
+      "company_guid",
+      "number"
+     ]
+    },
+    {
+     "name": "by_type_date",
+     "columns": [
+      "company_guid",
+      "voucher_type_guid",
+      "date"
+     ]
+    },
+    {
+     "name": "by_remote",
+     "columns": [
+      "company_guid",
+      "remote_id"
+     ]
+    },
+    {
+     "name": "by_alter",
+     "columns": [
+      "company_guid",
+      "alter_id"
+     ]
+    }
+   ],
+   "scope": "date_windowed",
+   "tally": {
+    "request": "LBVouchers",
+    "type": "Voucher",
+    "object": "VOUCHER"
+   },
+   "children": [
+    {
+     "table": "tx_ledger_line",
+     "fk": {
+      "voucher_guid": "guid"
+     }
+    },
+    {
+     "table": "tx_inventory_line",
+     "fk": {
+      "voucher_guid": "guid"
+     }
+    },
+    {
+     "table": "tx_batch_alloc",
+     "fk": {
+      "voucher_guid": "guid"
+     }
+    },
+    {
+     "table": "tx_bill_alloc",
+     "fk": {
+      "voucher_guid": "guid"
+     }
+    },
+    {
+     "table": "tx_tax_line",
+     "fk": {
+      "voucher_guid": "guid"
+     }
+    }
+   ],
+   "date_column": "date"
+  },
+  "tx_ledger_line": {
+   "group": "transaction",
+   "description": "",
+   "primary_key": [
+    "company_guid",
+    "voucher_guid",
+    "line_index"
+   ],
+   "columns": [
+    {
+     "name": "company_guid",
+     "type": "text",
+     "default": "",
+     "derive": "company_guid",
+     "verify": "derived"
+    },
+    {
+     "name": "voucher_guid",
+     "type": "text",
+     "default": "",
+     "derive": "parent voucher guid",
+     "verify": "derived"
+    },
+    {
+     "name": "line_index",
+     "type": "int",
+     "default": 0,
+     "derive": "ledger entries first (source order), then inventory accounting allocations (source order); 0-based",
+     "verify": "derived"
+    },
+    {
+     "name": "source",
+     "type": "text",
+     "default": "",
+     "derive": "'ledger' for (ALL)LEDGERENTRIES.LIST rows, 'inv_alloc' for ACCOUNTINGALLOCATIONS.LIST under an inventory entry",
+     "verify": "derived"
+    },
+    {
+     "name": "inv_line_index",
+     "type": "int",
+     "default": -1,
+     "derive": "tx_inventory_line.line_index for inv_alloc rows, -1 otherwise",
+     "verify": "derived"
+    },
+    {
+     "name": "ledger_name",
+     "type": "text",
+     "default": "",
+     "tally": "LEDGERNAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "ledger_guid",
+     "type": "text",
+     "default": "",
+     "derive": "resolve name -> tm_ledger.guid; empty when unresolved",
+     "verify": "derived"
+    },
+    {
+     "name": "amount",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "money",
+     "default": "0.00",
+     "tally": "AMOUNT",
+     "hint": "amount",
+     "verify": "legacy_seen",
+     "note": "signed, Dr negative, as Tally gives it"
+    },
+    {
+     "name": "is_deemed_positive",
+     "type": "bool",
+     "default": false,
+     "tally": "ISDEEMEDPOSITIVE",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "is_party_ledger",
+     "type": "bool",
+     "default": false,
+     "tally": "ISPARTYLEDGER",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "voucher_date",
+     "type": "date",
+     "default": "1900-01-01",
+     "derive": "tx_voucher.date",
+     "verify": "derived"
+    },
+    {
+     "name": "voucher_kind",
+     "type": "text",
+     "default": "",
+     "derive": "tx_voucher.kind",
+     "verify": "derived"
+    },
+    {
+     "name": "counts_in_books",
+     "type": "bool",
+     "default": false,
+     "derive": "copy of tx_voucher.counts_in_books (active voucher flag)",
+     "verify": "derived"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_voucher",
+     "columns": [
+      "company_guid",
+      "voucher_guid"
+     ]
+    },
+    {
+     "name": "by_ledger_date",
+     "columns": [
+      "company_guid",
+      "ledger_guid",
+      "voucher_date"
+     ]
+    },
+    {
+     "name": "by_kind_date",
+     "columns": [
+      "company_guid",
+      "voucher_kind",
+      "voucher_date"
+     ]
+    }
+   ],
+   "scope": "follows_parent",
+   "tally": {
+    "request": "LBVouchers",
+    "type": "Voucher",
+    "object": "VOUCHER",
+    "rows": "list:ALLLEDGERENTRIES.LIST|LEDGERENTRIES.LIST + list:ALLINVENTORYENTRIES.LIST|INVENTORYENTRIES.LIST>ACCOUNTINGALLOCATIONS.LIST"
+   },
+   "parent": {
+    "table": "tx_voucher",
+    "fk": {
+     "voucher_guid": "guid"
+    }
+   }
+  },
+  "tx_inventory_line": {
+   "group": "transaction",
+   "description": "",
+   "primary_key": [
+    "company_guid",
+    "voucher_guid",
+    "line_index"
+   ],
+   "columns": [
+    {
+     "name": "company_guid",
+     "type": "text",
+     "default": "",
+     "derive": "company_guid",
+     "verify": "derived"
+    },
+    {
+     "name": "voucher_guid",
+     "type": "text",
+     "default": "",
+     "derive": "parent voucher guid",
+     "verify": "derived"
+    },
+    {
+     "name": "line_index",
+     "type": "int",
+     "default": 0,
+     "derive": "0-based order of the inventory entries (in/out lists concatenated: out first then in)",
+     "verify": "derived"
+    },
+    {
+     "name": "stock_item_name",
+     "type": "text",
+     "default": "",
+     "tally": "STOCKITEMNAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "stock_item_guid",
+     "type": "text",
+     "default": "",
+     "derive": "resolve name -> tm_stock_item.guid",
+     "verify": "derived"
+    },
+    {
+     "name": "billed_qty",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "qty",
+     "default": "0.00",
+     "tally": "BILLEDQTY",
+     "hint": "qty",
+     "verify": "legacy_seen",
+     "note": "parsed number from e.g. \"10 Nos\"; unit goes to unit"
+    },
+    {
+     "name": "actual_qty",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "qty",
+     "default": "0.00",
+     "tally": "ACTUALQTY",
+     "hint": "qty",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "unit",
+     "type": "text",
+     "default": "",
+     "tally": "BILLEDQTY",
+     "hint": "qty_unit",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "rate",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "rate",
+     "default": "0.00",
+     "tally": "RATE",
+     "hint": "rate",
+     "verify": "legacy_seen",
+     "note": "parsed number from e.g. \"100.00/Nos\""
+    },
+    {
+     "name": "rate_unit",
+     "type": "text",
+     "default": "",
+     "tally": "RATE",
+     "hint": "rate_unit",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "discount_pct",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "pct",
+     "default": "0.00",
+     "tally": "DISCOUNT",
+     "hint": "amount",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "amount",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "money",
+     "default": "0.00",
+     "tally": "AMOUNT",
+     "hint": "amount",
+     "verify": "legacy_seen",
+     "note": "signed, Dr negative: sales lines positive (credit), purchase lines negative (debit)"
+    },
+    {
+     "name": "is_deemed_positive",
+     "type": "bool",
+     "default": false,
+     "tally": "ISDEEMEDPOSITIVE",
+     "hint": "yesno",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "hsn_code",
+     "type": "text",
+     "default": "",
+     "tally": "GSTHSNNAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "description",
+     "type": "text",
+     "default": "",
+     "tally": "BASICUSERDESCRIPTION.LIST",
+     "hint": "list_text_join",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "gst_taxability",
+     "type": "text",
+     "default": "",
+     "tally": "GSTOVRDNTAXABILITY",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "godown_name",
+     "type": "text",
+     "default": "",
+     "tally": "BATCHALLOCATIONS.LIST/GODOWNNAME",
+     "hint": "text",
+     "verify": "legacy_seen",
+     "note": "first batch allocation godown; full detail in tx_batch_alloc"
+    },
+    {
+     "name": "godown_guid",
+     "type": "text",
+     "default": "",
+     "derive": "resolve via tm_godown",
+     "verify": "derived"
+    },
+    {
+     "name": "voucher_date",
+     "type": "date",
+     "default": "1900-01-01",
+     "derive": "tx_voucher.date",
+     "verify": "derived"
+    },
+    {
+     "name": "voucher_kind",
+     "type": "text",
+     "default": "",
+     "derive": "tx_voucher.kind",
+     "verify": "derived"
+    },
+    {
+     "name": "counts_in_books",
+     "type": "bool",
+     "default": false,
+     "derive": "copy of tx_voucher.counts_in_books (active voucher flag)",
+     "verify": "derived"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_voucher",
+     "columns": [
+      "company_guid",
+      "voucher_guid"
+     ]
+    },
+    {
+     "name": "by_item_date",
+     "columns": [
+      "company_guid",
+      "stock_item_guid",
+      "voucher_date"
+     ]
+    },
+    {
+     "name": "by_kind_date",
+     "columns": [
+      "company_guid",
+      "voucher_kind",
+      "voucher_date"
+     ]
+    }
+   ],
+   "scope": "follows_parent",
+   "tally": {
+    "request": "LBVouchers",
+    "type": "Voucher",
+    "object": "VOUCHER",
+    "rows": "list:ALLINVENTORYENTRIES.LIST|INVENTORYENTRIES.LIST|INVENTORYENTRIESOUT.LIST|INVENTORYENTRIESIN.LIST"
+   },
+   "parent": {
+    "table": "tx_voucher",
+    "fk": {
+     "voucher_guid": "guid"
+    }
+   }
+  },
+  "tx_batch_alloc": {
+   "group": "transaction",
+   "description": "",
+   "primary_key": [
+    "company_guid",
+    "voucher_guid",
+    "line_index",
+    "alloc_index"
+   ],
+   "columns": [
+    {
+     "name": "company_guid",
+     "type": "text",
+     "default": "",
+     "derive": "company_guid",
+     "verify": "derived"
+    },
+    {
+     "name": "voucher_guid",
+     "type": "text",
+     "default": "",
+     "derive": "parent voucher guid",
+     "verify": "derived"
+    },
+    {
+     "name": "line_index",
+     "type": "int",
+     "default": 0,
+     "derive": "tx_inventory_line.line_index",
+     "verify": "derived"
+    },
+    {
+     "name": "alloc_index",
+     "type": "int",
+     "default": 0,
+     "derive": "0-based within the inventory entry",
+     "verify": "derived"
+    },
+    {
+     "name": "stock_item_guid",
+     "type": "text",
+     "default": "",
+     "derive": "copied from the inventory line",
+     "verify": "derived"
+    },
+    {
+     "name": "godown_name",
+     "type": "text",
+     "default": "",
+     "tally": "GODOWNNAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "godown_guid",
+     "type": "text",
+     "default": "",
+     "derive": "resolve via tm_godown",
+     "verify": "derived"
+    },
+    {
+     "name": "batch_name",
+     "type": "text",
+     "default": "",
+     "tally": "BATCHNAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "billed_qty",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "qty",
+     "default": "0.00",
+     "tally": "BILLEDQTY",
+     "hint": "qty",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "actual_qty",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "qty",
+     "default": "0.00",
+     "tally": "ACTUALQTY",
+     "hint": "qty",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "amount",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "money",
+     "default": "0.00",
+     "tally": "AMOUNT",
+     "hint": "amount",
+     "verify": "legacy_seen",
+     "note": "signed like the inventory line"
+    },
+    {
+     "name": "order_no",
+     "type": "text",
+     "default": "",
+     "tally": "ORDERNO",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "order_due_date",
+     "type": "date",
+     "nullable": true,
+     "default": null,
+     "tally": "ORDERDUEDATE",
+     "hint": "tally_date",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "tracking_no",
+     "type": "text",
+     "default": "",
+     "tally": "TRACKINGNUMBER",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "mfg_date",
+     "type": "date",
+     "nullable": true,
+     "default": null,
+     "tally": "MFDON",
+     "hint": "tally_date",
+     "verify": "assumed"
+    },
+    {
+     "name": "expiry_date",
+     "type": "date",
+     "nullable": true,
+     "default": null,
+     "tally": "EXPIRYPERIOD",
+     "hint": "tally_date",
+     "verify": "assumed"
+    },
+    {
+     "name": "is_destination",
+     "type": "bool",
+     "default": false,
+     "derive": "true for stock journal destination allocations (ISDEEMEDPOSITIVE No inside a stock journal)",
+     "verify": "derived"
+    },
+    {
+     "name": "voucher_date",
+     "type": "date",
+     "default": "1900-01-01",
+     "derive": "tx_voucher.date",
+     "verify": "derived"
+    },
+    {
+     "name": "voucher_kind",
+     "type": "text",
+     "default": "",
+     "derive": "tx_voucher.kind",
+     "verify": "derived"
+    },
+    {
+     "name": "counts_in_books",
+     "type": "bool",
+     "default": false,
+     "derive": "copy of tx_voucher.counts_in_books (active voucher flag)",
+     "verify": "derived"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_voucher",
+     "columns": [
+      "company_guid",
+      "voucher_guid"
+     ]
+    },
+    {
+     "name": "by_item_godown_batch",
+     "columns": [
+      "company_guid",
+      "stock_item_guid",
+      "godown_guid",
+      "batch_name"
+     ]
+    },
+    {
+     "name": "by_order",
+     "columns": [
+      "company_guid",
+      "order_no"
+     ]
+    }
+   ],
+   "scope": "follows_parent",
+   "tally": {
+    "request": "LBVouchers",
+    "type": "Voucher",
+    "object": "VOUCHER",
+    "rows": "list:<inventory entry>/BATCHALLOCATIONS.LIST"
+   },
+   "parent": {
+    "table": "tx_voucher",
+    "fk": {
+     "voucher_guid": "guid"
+    }
+   }
+  },
+  "tx_bill_alloc": {
+   "group": "transaction",
+   "description": "",
+   "primary_key": [
+    "company_guid",
+    "voucher_guid",
+    "line_index",
+    "alloc_index"
+   ],
+   "columns": [
+    {
+     "name": "company_guid",
+     "type": "text",
+     "default": "",
+     "derive": "company_guid",
+     "verify": "derived"
+    },
+    {
+     "name": "voucher_guid",
+     "type": "text",
+     "default": "",
+     "derive": "parent voucher guid",
+     "verify": "derived"
+    },
+    {
+     "name": "line_index",
+     "type": "int",
+     "default": 0,
+     "derive": "tx_ledger_line.line_index of the owning ledger entry",
+     "verify": "derived"
+    },
+    {
+     "name": "alloc_index",
+     "type": "int",
+     "default": 0,
+     "derive": "0-based within the ledger entry",
+     "verify": "derived"
+    },
+    {
+     "name": "ledger_guid",
+     "type": "text",
+     "default": "",
+     "derive": "copied from the owning ledger line",
+     "verify": "derived"
+    },
+    {
+     "name": "ledger_name",
+     "type": "text",
+     "default": "",
+     "derive": "copied from the owning ledger line",
+     "verify": "derived"
+    },
+    {
+     "name": "bill_name",
+     "type": "text",
+     "default": "",
+     "tally": "NAME",
+     "hint": "text",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "bill_type",
+     "type": "text",
+     "default": "",
+     "tally": "BILLTYPE",
+     "hint": "text",
+     "verify": "legacy_seen",
+     "note": "exactly one of: New Ref, Agst Ref, Advance, On Account"
+    },
+    {
+     "name": "amount",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "money",
+     "default": "0.00",
+     "tally": "AMOUNT",
+     "hint": "amount",
+     "verify": "legacy_seen",
+     "note": "signed like the ledger line (Dr negative)"
+    },
+    {
+     "name": "credit_period_days",
+     "type": "int",
+     "default": 0,
+     "tally": "BILLCREDITPERIOD",
+     "hint": "days",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "voucher_date",
+     "type": "date",
+     "default": "1900-01-01",
+     "derive": "tx_voucher.date",
+     "verify": "derived"
+    },
+    {
+     "name": "voucher_kind",
+     "type": "text",
+     "default": "",
+     "derive": "tx_voucher.kind",
+     "verify": "derived"
+    },
+    {
+     "name": "counts_in_books",
+     "type": "bool",
+     "default": false,
+     "derive": "copy of tx_voucher.counts_in_books (active voucher flag)",
+     "verify": "derived"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_voucher",
+     "columns": [
+      "company_guid",
+      "voucher_guid"
+     ]
+    },
+    {
+     "name": "by_ledger_bill",
+     "columns": [
+      "company_guid",
+      "ledger_guid",
+      "bill_name"
+     ]
+    },
+    {
+     "name": "by_ledger_date",
+     "columns": [
+      "company_guid",
+      "ledger_guid",
+      "voucher_date"
+     ]
+    }
+   ],
+   "scope": "follows_parent",
+   "tally": {
+    "request": "LBVouchers",
+    "type": "Voucher",
+    "object": "VOUCHER",
+    "rows": "list:<ledger entry>/BILLALLOCATIONS.LIST"
+   },
+   "parent": {
+    "table": "tx_voucher",
+    "fk": {
+     "voucher_guid": "guid"
+    }
+   }
+  },
+  "tx_tax_line": {
+   "group": "transaction",
+   "description": "Per-line GST breakup used by GST reports and the HSN summary. Derived by the connector (TALLY_WIRE section 6.4); not a native Tally list.",
+   "primary_key": [
+    "company_guid",
+    "voucher_guid",
+    "source",
+    "line_index",
+    "tax_head"
+   ],
+   "columns": [
+    {
+     "name": "company_guid",
+     "type": "text",
+     "default": "",
+     "derive": "company_guid",
+     "verify": "derived"
+    },
+    {
+     "name": "voucher_guid",
+     "type": "text",
+     "default": "",
+     "derive": "parent voucher guid",
+     "verify": "derived"
+    },
+    {
+     "name": "source",
+     "type": "text",
+     "default": "",
+     "derive": "'inventory' (tax computed on an item line) or 'ledger' (tax on a charge ledger line)",
+     "verify": "derived"
+    },
+    {
+     "name": "line_index",
+     "type": "int",
+     "default": 0,
+     "derive": "tx_inventory_line.line_index or tx_ledger_line.line_index according to source",
+     "verify": "derived"
+    },
+    {
+     "name": "tax_head",
+     "type": "text",
+     "default": "",
+     "tally": "GSTRATEDUTYHEAD",
+     "hint": "text",
+     "verify": "legacy_seen",
+     "note": "igst|cgst|sgst|cess|other (lower-case, normalised)"
+    },
+    {
+     "name": "rate",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "pct",
+     "default": "0.00",
+     "tally": "GSTRATE",
+     "hint": "amount",
+     "verify": "legacy_seen"
+    },
+    {
+     "name": "taxable_amount",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "money",
+     "default": "0.00",
+     "derive": "item amount (net of discount) the tax applies to, absolute",
+     "verify": "derived"
+    },
+    {
+     "name": "tax_amount",
+     "type": "decimal",
+     "scale": 4,
+     "kind": "money",
+     "default": "0.00",
+     "derive": "absolute tax amount for this line and head",
+     "verify": "derived"
+    },
+    {
+     "name": "hsn_code",
+     "type": "text",
+     "default": "",
+     "derive": "copied from the inventory line",
+     "verify": "derived"
+    },
+    {
+     "name": "voucher_date",
+     "type": "date",
+     "default": "1900-01-01",
+     "derive": "tx_voucher.date",
+     "verify": "derived"
+    },
+    {
+     "name": "voucher_kind",
+     "type": "text",
+     "default": "",
+     "derive": "tx_voucher.kind",
+     "verify": "derived"
+    },
+    {
+     "name": "counts_in_books",
+     "type": "bool",
+     "default": false,
+     "derive": "copy of tx_voucher.counts_in_books (active voucher flag)",
+     "verify": "derived"
+    }
+   ],
+   "indexes": [
+    {
+     "name": "by_voucher",
+     "columns": [
+      "company_guid",
+      "voucher_guid"
+     ]
+    },
+    {
+     "name": "by_head_date",
+     "columns": [
+      "company_guid",
+      "tax_head",
+      "voucher_date"
+     ]
+    }
+   ],
+   "scope": "follows_parent",
+   "tally": {
+    "request": "LBVouchers",
+    "type": "Voucher",
+    "object": "VOUCHER",
+    "rows": "derived from RATEDETAILS.LIST + duty ledger lines"
+   },
+   "parent": {
+    "table": "tx_voucher",
+    "fk": {
+     "voucher_guid": "guid"
+    }
+   }
+  },
+  "ref_voucher_kind": {
+   "group": "reference",
+   "description": "Static seed shipped with every app and with the vault; never synced in v1. Company-defined voucher types resolve to one of these via tm_voucher_type.base_kind.",
+   "primary_key": [
+    "kind"
+   ],
+   "columns": [
+    {
+     "name": "kind",
+     "type": "text",
+     "default": "",
+     "derive": "slug",
+     "verify": "derived"
+    },
+    {
+     "name": "tally_name",
+     "type": "text",
+     "default": "",
+     "derive": "Tally reserved voucher type name (case-insensitive match)",
+     "verify": "derived"
+    },
+    {
+     "name": "label",
+     "type": "text",
+     "default": "",
+     "derive": "display label",
+     "verify": "derived"
+    },
+    {
+     "name": "affects_accounts",
+     "type": "bool",
+     "default": false,
+     "derive": "posts to ledgers",
+     "verify": "derived"
+    },
+    {
+     "name": "affects_stock",
+     "type": "bool",
+     "default": false,
+     "derive": "moves stock",
+     "verify": "derived"
+    },
+    {
+     "name": "stock_direction",
+     "type": "text",
+     "default": "",
+     "derive": "in|out|both|set|none",
+     "verify": "derived"
+    },
+    {
+     "name": "is_order",
+     "type": "bool",
+     "default": false,
+     "derive": "order voucher (pending quantities)",
+     "verify": "derived"
+    },
+    {
+     "name": "is_note",
+     "type": "bool",
+     "default": false,
+     "derive": "delivery/receipt/rejection note",
+     "verify": "derived"
+    },
+    {
+     "name": "party_side",
+     "type": "text",
+     "default": "",
+     "derive": "dr|cr|none: side the party ledger is posted on",
+     "verify": "derived"
+    },
+    {
+     "name": "entry_kind",
+     "type": "text",
+     "default": "",
+     "derive": "entry_queue kind that creates this base kind; empty = not creatable in v1",
+     "verify": "derived"
+    }
+   ],
+   "indexes": [],
+   "scope": "static",
+   "seed_rows": [
+    {
+     "kind": "sales",
+     "tally_name": "Sales",
+     "label": "Sales",
+     "affects_accounts": true,
+     "affects_stock": true,
+     "stock_direction": "out",
+     "is_order": false,
+     "is_note": false,
+     "party_side": "dr",
+     "entry_kind": "invoice"
+    },
+    {
+     "kind": "purchase",
+     "tally_name": "Purchase",
+     "label": "Purchase",
+     "affects_accounts": true,
+     "affects_stock": true,
+     "stock_direction": "in",
+     "is_order": false,
+     "is_note": false,
+     "party_side": "cr",
+     "entry_kind": "invoice"
+    },
+    {
+     "kind": "receipt",
+     "tally_name": "Receipt",
+     "label": "Receipt",
+     "affects_accounts": true,
+     "affects_stock": false,
+     "stock_direction": "none",
+     "is_order": false,
+     "is_note": false,
+     "party_side": "cr",
+     "entry_kind": "receipt"
+    },
+    {
+     "kind": "payment",
+     "tally_name": "Payment",
+     "label": "Payment",
+     "affects_accounts": true,
+     "affects_stock": false,
+     "stock_direction": "none",
+     "is_order": false,
+     "is_note": false,
+     "party_side": "dr",
+     "entry_kind": "payment"
+    },
+    {
+     "kind": "contra",
+     "tally_name": "Contra",
+     "label": "Contra",
+     "affects_accounts": true,
+     "affects_stock": false,
+     "stock_direction": "none",
+     "is_order": false,
+     "is_note": false,
+     "party_side": "none",
+     "entry_kind": "contra"
+    },
+    {
+     "kind": "journal",
+     "tally_name": "Journal",
+     "label": "Journal",
+     "affects_accounts": true,
+     "affects_stock": false,
+     "stock_direction": "none",
+     "is_order": false,
+     "is_note": false,
+     "party_side": "none",
+     "entry_kind": "journal"
+    },
+    {
+     "kind": "credit_note",
+     "tally_name": "Credit Note",
+     "label": "Credit Note",
+     "affects_accounts": true,
+     "affects_stock": true,
+     "stock_direction": "in",
+     "is_order": false,
+     "is_note": false,
+     "party_side": "cr",
+     "entry_kind": "invoice"
+    },
+    {
+     "kind": "debit_note",
+     "tally_name": "Debit Note",
+     "label": "Debit Note",
+     "affects_accounts": true,
+     "affects_stock": true,
+     "stock_direction": "out",
+     "is_order": false,
+     "is_note": false,
+     "party_side": "dr",
+     "entry_kind": "invoice"
+    },
+    {
+     "kind": "delivery_note",
+     "tally_name": "Delivery Note",
+     "label": "Delivery Note",
+     "affects_accounts": false,
+     "affects_stock": true,
+     "stock_direction": "out",
+     "is_order": false,
+     "is_note": true,
+     "party_side": "dr",
+     "entry_kind": "inventory_voucher"
+    },
+    {
+     "kind": "receipt_note",
+     "tally_name": "Receipt Note",
+     "label": "Receipt Note",
+     "affects_accounts": false,
+     "affects_stock": true,
+     "stock_direction": "in",
+     "is_order": false,
+     "is_note": true,
+     "party_side": "cr",
+     "entry_kind": "inventory_voucher"
+    },
+    {
+     "kind": "rejections_in",
+     "tally_name": "Rejections In",
+     "label": "Rejections In",
+     "affects_accounts": false,
+     "affects_stock": true,
+     "stock_direction": "in",
+     "is_order": false,
+     "is_note": true,
+     "party_side": "cr",
+     "entry_kind": "inventory_voucher"
+    },
+    {
+     "kind": "rejections_out",
+     "tally_name": "Rejections Out",
+     "label": "Rejections Out",
+     "affects_accounts": false,
+     "affects_stock": true,
+     "stock_direction": "out",
+     "is_order": false,
+     "is_note": true,
+     "party_side": "dr",
+     "entry_kind": "inventory_voucher"
+    },
+    {
+     "kind": "sales_order",
+     "tally_name": "Sales Order",
+     "label": "Sales Order",
+     "affects_accounts": false,
+     "affects_stock": false,
+     "stock_direction": "none",
+     "is_order": true,
+     "is_note": false,
+     "party_side": "dr",
+     "entry_kind": "order"
+    },
+    {
+     "kind": "purchase_order",
+     "tally_name": "Purchase Order",
+     "label": "Purchase Order",
+     "affects_accounts": false,
+     "affects_stock": false,
+     "stock_direction": "none",
+     "is_order": true,
+     "is_note": false,
+     "party_side": "cr",
+     "entry_kind": "order"
+    },
+    {
+     "kind": "job_work_in_order",
+     "tally_name": "Job Work In Order",
+     "label": "Job Work In Order",
+     "affects_accounts": false,
+     "affects_stock": false,
+     "stock_direction": "none",
+     "is_order": true,
+     "is_note": false,
+     "party_side": "none",
+     "entry_kind": ""
+    },
+    {
+     "kind": "job_work_out_order",
+     "tally_name": "Job Work Out Order",
+     "label": "Job Work Out Order",
+     "affects_accounts": false,
+     "affects_stock": false,
+     "stock_direction": "none",
+     "is_order": true,
+     "is_note": false,
+     "party_side": "none",
+     "entry_kind": ""
+    },
+    {
+     "kind": "stock_journal",
+     "tally_name": "Stock Journal",
+     "label": "Stock Journal",
+     "affects_accounts": false,
+     "affects_stock": true,
+     "stock_direction": "both",
+     "is_order": false,
+     "is_note": false,
+     "party_side": "none",
+     "entry_kind": "inventory_voucher"
+    },
+    {
+     "kind": "physical_stock",
+     "tally_name": "Physical Stock",
+     "label": "Physical Stock",
+     "affects_accounts": false,
+     "affects_stock": true,
+     "stock_direction": "set",
+     "is_order": false,
+     "is_note": false,
+     "party_side": "none",
+     "entry_kind": ""
+    },
+    {
+     "kind": "material_in",
+     "tally_name": "Material In",
+     "label": "Material In",
+     "affects_accounts": false,
+     "affects_stock": true,
+     "stock_direction": "in",
+     "is_order": false,
+     "is_note": false,
+     "party_side": "none",
+     "entry_kind": ""
+    },
+    {
+     "kind": "material_out",
+     "tally_name": "Material Out",
+     "label": "Material Out",
+     "affects_accounts": false,
+     "affects_stock": true,
+     "stock_direction": "out",
+     "is_order": false,
+     "is_note": false,
+     "party_side": "none",
+     "entry_kind": ""
+    },
+    {
+     "kind": "memorandum",
+     "tally_name": "Memorandum",
+     "label": "Memorandum",
+     "affects_accounts": false,
+     "affects_stock": false,
+     "stock_direction": "none",
+     "is_order": false,
+     "is_note": false,
+     "party_side": "none",
+     "entry_kind": ""
+    },
+    {
+     "kind": "reversing_journal",
+     "tally_name": "Reversing Journal",
+     "label": "Reversing Journal",
+     "affects_accounts": false,
+     "affects_stock": false,
+     "stock_direction": "none",
+     "is_order": false,
+     "is_note": false,
+     "party_side": "none",
+     "entry_kind": ""
+    },
+    {
+     "kind": "payroll",
+     "tally_name": "Payroll",
+     "label": "Payroll",
+     "affects_accounts": true,
+     "affects_stock": false,
+     "stock_direction": "none",
+     "is_order": false,
+     "is_note": false,
+     "party_side": "none",
+     "entry_kind": ""
+    },
+    {
+     "kind": "attendance",
+     "tally_name": "Attendance",
+     "label": "Attendance",
+     "affects_accounts": false,
+     "affects_stock": false,
+     "stock_direction": "none",
+     "is_order": false,
+     "is_note": false,
+     "party_side": "none",
+     "entry_kind": ""
+    },
+    {
+     "kind": "unknown",
+     "tally_name": "",
+     "label": "Unknown",
+     "affects_accounts": false,
+     "affects_stock": false,
+     "stock_direction": "none",
+     "is_order": false,
+     "is_note": false,
+     "party_side": "none",
+     "entry_kind": ""
+    }
+   ]
+  }
+ },
+ "device_tables": {
+  "description": "Tables that exist only on a device or only in the license project; defined elsewhere.",
+  "control": [
+   "_lb_config",
+   "_lb_prefs",
+   "_lb_sync_state",
+   "_lb_sync_log",
+   "_lb_entry_drafts",
+   "_lb_calc_cache",
+   "_lb_recent",
+   "_lb_kv"
+  ],
+  "license_project": "See sql/02_license_project_schema.sql: followups, reminder_jobs, reminder_log, punch_logs, team_users, app_settings (mirrored on the device where useful); devices, sync_requests, sync_chunks, entry_queue, snapshots are transient and never mirrored",
+  "optional_derived": [
+   "drv_outstanding",
+   "drv_invoice_payment_status",
+   "drv_customer_last_sale",
+   "drv_pending_orders",
+   "drv_batch_closing"
+  ]
+ }
+}

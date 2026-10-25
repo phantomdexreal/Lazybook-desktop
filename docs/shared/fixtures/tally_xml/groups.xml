@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ENVELOPE>
+  <HEADER>
+    <VERSION>1</VERSION>
+    <STATUS>1</STATUS>
+  </HEADER>
+  <BODY>
+    <DATA>
+      <COLLECTION>
+        <GROUP NAME="Capital Account">
+          <GUID>10c90379-5bb8-528c-b73b-3aae18b70cc4-00000002</GUID>
+          <RESERVEDNAME>Capital Account</RESERVEDNAME>
+          <CLOSINGBALANCE>192300.00</CLOSINGBALANCE>
+          <OPENINGBALANCE>192300.00</OPENINGBALANCE>
+          <ALTERID>1</ALTERID>
+        </GROUP>
+        <GROUP NAME="Current Assets">
+          <GUID>c9e8de30-90bd-5071-bf16-b0336d758145-00000003</GUID>
+          <RESERVEDNAME>Current Assets</RESERVEDNAME>
+          <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+          <CLOSINGBALANCE>-146349.50</CLOSINGBALANCE>
+          <OPENINGBALANCE>-205000.00</OPENINGBALANCE>
+          <ALTERID>2</ALTERID>
+        </GROUP>
+        <GROUP NAME="Current Liabilities">
+          <GUID>c7aac16a-18bd-5b08-932a-0be96041687f-00000004</GUID>
+          <RESERVEDNAME>Current Liabilities</RESERVEDNAME>
+          <CLOSINGBALANCE>51073.80</CLOSINGBALANCE>
+          <OPENINGBALANCE>30000.00</OPENINGBALANCE>
+          <ALTERID>3</ALTERID>
+        </GROUP>
+        <GROUP NAME="Cash-in-Hand">
+          <GUID>daf87973-ce6b-5f3d-b837-3fd8bdfbd28f-00000005</GUID>
+          <PARENT>Current Assets</PARENT>
+          <RESERVEDNAME>Cash-in-Hand</RESERVEDNAME>
+          <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+          <CLOSINGBALANCE>-36420.00</CLOSINGBALANCE>
+          <OPENINGBALANCE>-25000.00</OPENINGBALANCE>
+          <ALTERID>4</ALTERID>
+        </GROUP>
+        <GROUP NAME="Bank Accounts">
+          <GUID>c4378665-74a1-57db-a6c4-e6333525acc6-00000006</GUID>
+          <PARENT>Current Assets</PARENT>
+          <RESERVEDNAME>Bank Accounts</RESERVEDNAME>
+          <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+          <CLOSINGBALANCE>-62567.00</CLOSINGBALANCE>
+          <OPENINGBALANCE>-150000.00</OPENINGBALANCE>
+          <ALTERID>5</ALTERID>
+        </GROUP>
+        <GROUP NAME="Sundry Debtors">
+          <GUID>e9501d4a-6956-5830-ae47-f5260a9ddac3-00000007</GUID>
+          <PARENT>Current Assets</PARENT>
+          <RESERVEDNAME>Sundry Debtors</RESERVEDNAME>
+          <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+          <ISBILLWISEON>Yes</ISBILLWISEON>
+          <CLOSINGBALANCE>-47362.50</CLOSINGBALANCE>
+          <OPENINGBALANCE>-30000.00</OPENINGBALANCE>
+          <ALTERID>6</ALTERID>
+        </GROUP>
+        <GROUP NAME="Key Customers">
+          <GUID>96526c2d-4c97-5cd4-810b-f2ff1865e352-00000008</GUID>
+          <PARENT>Sundry Debtors</PARENT>
+          <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+          <ISBILLWISEON>Yes</ISBILLWISEON>
+          <CLOSINGBALANCE>-20980.00</CLOSINGBALANCE>
+          <OPENINGBALANCE>-20000.00</OPENINGBALANCE>
+          <ALTERID>7</ALTERID>
+        </GROUP>
+        <GROUP NAME="Stock-in-Hand">
+          <GUID>ff437996-5331-5802-ab86-66b49df96b7b-00000009</GUID>
+          <PARENT>Current Assets</PARENT>
+          <RESERVEDNAME>Stock-in-Hand</RESERVEDNAME>
+          <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+          <ALTERID>8</ALTERID>
+        </GROUP>
+        <GROUP NAME="Suppliers">
+          <GUID>a1a7f9ed-df3d-5477-b9d4-f1a1e977d660-0000000a</GUID>
+          <PARENT>Current Liabilities</PARENT>
+          <RESERVEDNAME>Sundry Creditors</RESERVEDNAME>
+          <ISBILLWISEON>Yes</ISBILLWISEON>
+          <CLOSINGBALANCE>52203.50</CLOSINGBALANCE>
+          <OPENINGBALANCE>30000.00</OPENINGBALANCE>
+          <ALTERID>9</ALTERID>
+        </GROUP>
+        <GROUP NAME="Duties &amp; Taxes">
+          <GUID>b94dcdf5-0f87-500d-8f7a-7c2d2814fd1d-0000000b</GUID>
+          <PARENT>Current Liabilities</PARENT>
+          <RESERVEDNAME>Duties &amp; Taxes</RESERVEDNAME>
+          <CLOSINGBALANCE>-1129.70</CLOSINGBALANCE>
+          <ALTERID>10</ALTERID>
+        </GROUP>
+        <GROUP NAME="Sales Accounts">
+          <GUID>c61d9d62-dbdc-5ad2-a015-760fb4bbe4f0-0000000c</GUID>
+          <RESERVEDNAME>Sales Accounts</RESERVEDNAME>
+          <ISREVENUE>Yes</ISREVENUE>
+          <AFFECTSGROSSPROFIT>Yes</AFFECTSGROSSPROFIT>
+          <CLOSINGBALANCE>61680.00</CLOSINGBALANCE>
+          <ALTERID>11</ALTERID>
+        </GROUP>
+        <GROUP NAME="Purchase Accounts">
+          <GUID>e3c5d1b8-941b-5573-8dbe-d2971be1cbbc-0000000d</GUID>
+          <RESERVEDNAME>Purchase Accounts</RESERVEDNAME>
+          <ISREVENUE>Yes</ISREVENUE>
+          <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+          <AFFECTSGROSSPROFIT>Yes</AFFECTSGROSSPROFIT>
+          <CLOSINGBALANCE>-70405.00</CLOSINGBALANCE>
+          <ALTERID>12</ALTERID>
+        </GROUP>
+        <GROUP NAME="Indirect Expenses">
+          <GUID>9d78815f-dfe6-5031-a692-8998aac03a0d-0000000e</GUID>
+          <RESERVEDNAME>Indirect Expenses</RESERVEDNAME>
+          <ISREVENUE>Yes</ISREVENUE>
+          <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+          <CLOSINGBALANCE>-70999.30</CLOSINGBALANCE>
+          <ALTERID>13</ALTERID>
+        </GROUP>
+      </COLLECTION>
+    </DATA>
+  </BODY>
+</ENVELOPE>

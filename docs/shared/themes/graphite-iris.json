@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "slug": "graphite-iris",
+  "name": "Graphite Iris",
+  "version": 1,
+  "author": "LazyBooks",
+  "description": "Cooler graphite greys with a soft iris-violet accent; sharper corners.",
+  "shared": {
+    "radius": {
+      "sm": "4px",
+      "md": "7px",
+      "lg": "10px",
+      "xl": "14px"
+    },
+    "font_sans": "Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+    "font_mono": "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+    "motion": {
+      "fast": "120ms",
+      "base": "200ms",
+      "slow": "320ms"
+    },
+    "density_default": "comfortable"
+  },
+  "modes": {
+    "dark": {
+      "bg": "#0D0E12",
+      "surface": "#15171D",
+      "surface_raised": "#1C1F27",
+      "surface_sunken": "#101116",
+      "border": "#2B2F3A",
+      "border_strong": "#3D4252",
+      "text": "#EDEEF3",
+      "text_muted": "#A7ABBA",
+      "text_faint": "#7C8091",
+      "accent": "#9C8CFF",
+      "accent_hover": "#B0A3FF",
+      "accent_active": "#8A78F2",
+      "accent_contrast": "#0D0E12",
+      "accent_soft": "#201C3A",
+      "focus_ring": "#9C8CFF",
+      "success": "#4ADE80",
+      "warning": "#FBBF24",
+      "danger": "#F87171",
+      "info": "#60A5FA",
+      "overlay": "rgba(5,4,10,0.62)",
+      "shadow_color": "#000000",
+      "chart": [
+        "#9B7BFF",
+        "#4FD1C5",
+        "#F6AD55",
+        "#F687B3",
+        "#63B3ED",
+        "#68D391",
+        "#FC8181",
+        "#B794F4"
+      ]
+    },
+    "light": {
+      "bg": "#F4F5F8",
+      "surface": "#FFFFFF",
+      "surface_raised": "#FFFFFF",
+      "surface_sunken": "#ECEEF3",
+      "border": "#D8DBE4",
+      "border_strong": "#BFC4D2",
+      "text": "#121420",
+      "text_muted": "#535A6C",
+      "text_faint": "#7F8698",
+      "accent": "#5B45E0",
+      "accent_hover": "#4A35C8",
+      "accent_active": "#3D2BB0",
+      "accent_contrast": "#FFFFFF",
+      "accent_soft": "#E9E6FB",
+      "focus_ring": "#5B45E0",
+      "success": "#15803D",
+      "warning": "#B45309",
+      "danger": "#B91C1C",
+      "info": "#1D4ED8",
+      "overlay": "rgba(5,4,10,0.62)",
+      "shadow_color": "#1F2540",
+      "chart": [
+        "#6B46F0",
+        "#0E9F8E",
+        "#D9822B",
+        "#D6457F",
+        "#2F7FD3",
+        "#2F9E5B",
+        "#D64545",
+        "#8A5CF0"
+      ]
+    }
+  }
+}

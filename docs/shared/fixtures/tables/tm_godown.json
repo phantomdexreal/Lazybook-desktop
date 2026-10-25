@@ -1,0 +1,26 @@
+[
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "guid": "n:Main Location",
+  "name": "Main Location",
+  "name_lc": "main location",
+  "parent_name": "",
+  "parent_guid": "",
+  "address": null,
+  "pincode": "",
+  "phone": "",
+  "alter_id": 110
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "guid": "n:Warehouse 2",
+  "name": "Warehouse 2",
+  "name_lc": "warehouse 2",
+  "parent_name": "",
+  "parent_guid": "",
+  "address": null,
+  "pincode": "",
+  "phone": "",
+  "alter_id": 111
+ }
+]

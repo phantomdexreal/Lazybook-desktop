@@ -1,0 +1,29 @@
+{
+ "v": 1,
+ "kind": "inventory_voucher",
+ "client_request_id": "66666666-6666-4666-8666-666666666667",
+ "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+ "created_at": "2026-09-25T10:15:00Z",
+ "device_id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+ "data": {
+  "voucher_type_guid": "f3ba9094-9886-5ae3-9035-1e6f644eeaa2-00000036",
+  "base_kind": "stock_journal",
+  "date": "2026-09-22",
+  "source_lines": [
+   {
+    "stock_item_guid": "1247b981-fb00-5f75-acd8-0acea03f7a2a-00000022",
+    "godown_guid": "n:Main Location",
+    "qty": "10",
+    "unit": "Nos"
+   }
+  ],
+  "destination_lines": [
+   {
+    "stock_item_guid": "1247b981-fb00-5f75-acd8-0acea03f7a2a-00000022",
+    "godown_guid": "n:Warehouse 2",
+    "qty": "10",
+    "unit": "Nos"
+   }
+  ]
+ }
+}

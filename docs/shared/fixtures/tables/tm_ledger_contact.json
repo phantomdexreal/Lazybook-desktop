@@ -1,0 +1,57 @@
+[
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "ledger_guid": "91d185ff-e8f9-5976-a314-6ca981fa9e73-00000011",
+  "contact_index": 0,
+  "name": "Anil Shah",
+  "phone": "02240001111",
+  "mobile": "9820000001",
+  "email": "accounts@alpha.example.invalid",
+  "designation": "",
+  "is_primary": true
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "ledger_guid": "0809e8be-2273-5f10-a2da-1956ba3373f5-00000012",
+  "contact_index": 0,
+  "name": "Bina Rao",
+  "phone": "08040002222",
+  "mobile": "9820000002",
+  "email": "pay@beta.example.invalid",
+  "designation": "",
+  "is_primary": true
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "ledger_guid": "a7d89e67-a0ce-5ee5-a8e7-9394183af175-00000013",
+  "contact_index": 0,
+  "name": "Gopal Iyer",
+  "phone": "02240003333",
+  "mobile": "9820000003",
+  "email": "buy@gamma.example.invalid",
+  "designation": "",
+  "is_primary": true
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "ledger_guid": "dc08287e-d6a4-5cda-9ed3-8eedc338468b-00000014",
+  "contact_index": 0,
+  "name": "Om Mehta",
+  "phone": "02240004444",
+  "mobile": "9820000004",
+  "email": "sales@omega.example.invalid",
+  "designation": "",
+  "is_primary": true
+ },
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "ledger_guid": "1266481f-5d09-501f-81c3-1f21cd9589dd-00000015",
+  "contact_index": 0,
+  "name": "Zara Patel",
+  "phone": "07940005555",
+  "mobile": "9820000005",
+  "email": "orders@zeta.example.invalid",
+  "designation": "",
+  "is_primary": true
+ }
+]

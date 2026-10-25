@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Colours, radii and fonts come only from --lb-* tokens (tokens.css + the theme engine). */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+body {
+  background: var(--lb-bg);
+  color: var(--lb-text);
+  font-family: var(--lb-font-sans);
+  font-size: 14px;
+  transition: background-color var(--lb-motion-base) ease-out, color var(--lb-motion-base) ease-out;
+}
+.lb-rail-btn,
+.lb-seg {
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color var(--lb-motion-fast) ease-out, color var(--lb-motion-fast) ease-out;
+}
+.lb-field {
+  font-family: inherit;
+}

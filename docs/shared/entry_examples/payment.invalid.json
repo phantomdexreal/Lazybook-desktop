@@ -1,0 +1,23 @@
+{
+ "v": 1,
+ "kind": "payment",
+ "client_request_id": "33333333-3333-4333-8333-333333333335",
+ "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+ "created_at": "2026-09-25T10:15:00Z",
+ "device_id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+ "data": {
+  "voucher_type_guid": "27a46c10-967a-5f53-89dc-5194ffe62ee7-0000002c",
+  "base_kind": "payment",
+  "date": "2026-09-29",
+  "party_ledger_guid": "6790b868-6f25-5057-bb05-d99c8577c5de-0000001e",
+  "cash_bank_ledger_guid": "1fcea96c-dfd0-5d89-9545-ce2047a268f3-00000010",
+  "amount": "12000.00",
+  "narration": "Rent",
+  "bills": [
+   {
+    "type": "on_account",
+    "amount": "12000.00"
+   }
+  ]
+ }
+}

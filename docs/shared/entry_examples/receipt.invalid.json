@@ -1,0 +1,28 @@
+{
+ "v": 1,
+ "kind": "receipt",
+ "client_request_id": "22222222-2222-4222-8222-222222222223",
+ "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+ "created_at": "2026-09-28T09:00:00Z",
+ "device_id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+ "data": {
+  "voucher_type_guid": "1d9bb38e-d71a-5198-a300-e8db5bd9bad4-0000002b",
+  "base_kind": "receipt",
+  "date": "2026-09-28",
+  "party_ledger_guid": "91d185ff-e8f9-5976-a314-6ca981fa9e73-00000011",
+  "cash_bank_ledger_guid": "1fcea96c-dfd0-5d89-9545-ce2047a268f3-00000010",
+  "amount": "3000.00",
+  "bills": [
+   {
+    "type": "agst_ref",
+    "name": "TI-004",
+    "amount": "2500.00"
+   }
+  ],
+  "instrument": {
+   "type": "upi",
+   "number": "UPI123456"
+  },
+  "narration": "Entered from phone"
+ }
+}

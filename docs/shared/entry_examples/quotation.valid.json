@@ -1,0 +1,26 @@
+{
+ "v": 1,
+ "kind": "quotation",
+ "client_request_id": "77777777-7777-4777-8777-777777777779",
+ "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+ "created_at": "2026-09-25T10:15:00Z",
+ "device_id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+ "data": {
+  "voucher_type_guid": "10f582f1-7875-58ec-8362-43c370917ae7-00000035",
+  "base_kind": "sales_order",
+  "date": "2026-09-24",
+  "number": "Q-002",
+  "party_ledger_guid": "91d185ff-e8f9-5976-a314-6ca981fa9e73-00000011",
+  "valid_till": "2026-10-24",
+  "lines": [
+   {
+    "stock_item_guid": "1247b981-fb00-5f75-acd8-0acea03f7a2a-00000022",
+    "qty": "50",
+    "unit": "Nos",
+    "rate": "79.00",
+    "amount": "3950.00",
+    "due_date": "2026-10-24"
+   }
+  ]
+ }
+}

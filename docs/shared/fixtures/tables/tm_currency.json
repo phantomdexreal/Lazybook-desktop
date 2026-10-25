@@ -1,0 +1,11 @@
+[
+ {
+  "company_guid": "6d29795f-2a0c-5ec8-a916-52baf7b1aa03-00000001",
+  "guid": "38069362-5780-5da4-9bd4-717bdac4d7ea-0000006f",
+  "name": "INR",
+  "formal_name": "Indian Rupee",
+  "symbol": "INR",
+  "decimal_places": 2,
+  "alter_id": 112
+ }
+]

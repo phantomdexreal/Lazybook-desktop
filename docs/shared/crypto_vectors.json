@@ -1,0 +1,27 @@
+{
+  "description": "Shared test vectors. PWA, Desktop and Admin crypto must reproduce these exactly.",
+  "kdf": {
+    "alg": "PBKDF2-HMAC-SHA256",
+    "iterations": 210000,
+    "salt_b64": "AAECAwQFBgcICQoLDA0ODw==",
+    "passphrase": "correct horse battery staple",
+    "key_hex": "18465cade096c185b5f60765891fca3f74477e23fd9b6fc88faf7831a91753ac"
+  },
+  "kcv": {
+    "formula": "base64(HMAC-SHA256(key,'LB-KCV-v1')[0:8])",
+    "value": "iNWTlKKqUY8="
+  },
+  "aead": {
+    "alg": "AES-256-GCM",
+    "aad_formula": "'lb1|'+license_key",
+    "license_key": "LB-TEST-0000-0000-0001",
+    "iv_b64": "ZGVmZ2hpamtsbW5v",
+    "plaintext_utf8": "[{\"guid\":\"g1\",\"name\":\"Cash\"}]",
+    "envelope": {
+      "v": 1,
+      "iv": "ZGVmZ2hpamtsbW5v",
+      "ct": "R5U9TtmflIKBkTDVcYcfqrwkZuiMIHE8UOTbLzjxzWfKjFLyHIUDNIdTXWql"
+    }
+  },
+  "notes": "ct = ciphertext||16-byte tag, base64. If payload was gzip-compressed before encryption the envelope carries \"z\":1."
+}
