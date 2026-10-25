@@ -17,11 +17,18 @@ export { mapMasters, canon, type MasterTables, type TableRow } from './map';
 export { MASTER_TABLES } from './columns';
 
 /**
- * Masters that exist only when the company uses the feature (Employee needs Payroll; TaxUnit needs a registered tax unit).
- * When TallyPrime refuses one of these (for example "Incorrect Object Type"), it is skipped with a warning and read as empty
- * instead of aborting the whole pull. Every other master is required.
+ * Requests that are never sent to Tally. TallyPrime has no object type named Employee: employees are Cost Centre objects
+ * (the proven LazyBooks predecessor models Employee as a CostCentre variant and never pulled it), so asking for TYPE Employee
+ * makes Tally show a blocking "Internal Error ... Incorrect Object Type!" dialog and stall the XML server until someone clicks OK.
+ * tm_employee therefore stays empty until a Cost-Centre based pull is built and verified against a live Tally.
  */
-const OPTIONAL_REQUESTS = new Set(['LBEmployees', 'LBTaxUnits']);
+const NOT_SENT_REQUESTS = new Set(['LBEmployees']);
+
+/**
+ * Masters that exist only when the company uses the feature (TaxUnit needs a registered tax unit).
+ * When TallyPrime refuses one of these cleanly, it is skipped with a warning and read as empty instead of aborting the whole pull.
+ */
+const OPTIONAL_REQUESTS = new Set(['LBTaxUnits']);
 
 export interface MasterRequest {
   /** Request id and collection name (`LBLedgers`). */
@@ -113,6 +120,10 @@ export function createMasters(deps: MastersDeps): Masters {
       const rows: Record<string, Row[]> = {};
       for (const req of requests) {
         // one request at a time; a failure aborts the pull so a half-read master set is never returned (optional masters excepted)
+        if (NOT_SENT_REQUESTS.has(req.id)) {
+          logger.info('tally', 'master not requested: no such Tally object type', { id: req.id, type: req.type });
+          continue;
+        }
         try {
           const all = await deps.client.collection(req.id, req.fields, { type: req.type, fetch: req.fetch, company });
           rows[req.id] = all.filter((r) => typeof r['@NAME'] === 'string');
