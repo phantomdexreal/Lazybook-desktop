@@ -9,7 +9,7 @@ Deletion detection is Phase 12 (not here).
 */
 
 import { logger } from '../../logger';
-import type { TallyClient } from '../client';
+import { TallyError, type TallyClient } from '../client';
 import type { Row } from '../xml';
 import { textOf, type MasterTables } from '../masters/map';
 import { VOUCHER_TABLES } from './columns';
@@ -19,6 +19,18 @@ export { mapVouchers, emptyVoucherTables, type VoucherTables } from './map';
 export { VOUCHER_TABLES } from './columns';
 
 export const REQ_VOUCHERS = 'LBVouchers';
+
+/**
+ * One voucher request per calendar month, not one for the whole financial year: a year of vouchers with every nested list
+ * (ledger entries, inventory, batches, bills) can take Tally minutes, and Tally serves one request at a time, so a single huge
+ * export times out and the repeated attempts then pile up behind each other. The proven predecessor also read vouchers in small
+ * pages with a 3 minute timeout.
+ */
+export const VOUCHER_TIMEOUT_MS = 180_000;
+/** A chunk that still times out is cut in half this many times at most (a month becomes about 4 days). */
+const MAX_SPLITS = 3;
+/** Pause before reading the smaller halves, so Tally can finish the abandoned request first. */
+const SPLIT_PAUSE_MS = 15_000;
 
 /** NATIVEMETHOD fields (simple tags of tx_voucher) and FETCH lists (everything nested). Request id/type come from data_model. */
 export function buildVoucherRequest(): { id: string; type: string; fields: string[]; fetch: string[] } {
@@ -62,6 +74,8 @@ export interface VouchersResult {
 
 export interface VoucherDeps {
   client: TallyClient;
+  /** Test hook for the pause after a timeout. */
+  sleep?: (ms: number) => Promise<void>;
   getCompanyName: () => string | null;
   getCompanyGuid: () => string | null;
   getCompanyState: () => string;
@@ -83,6 +97,22 @@ function addDays(iso: string, days: number): string {
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
+/** Calendar-month ranges covering [from, to], inclusive, ISO dates. */
+export function monthChunks(from: string, to: string): Array<[string, string]> {
+  const out: Array<[string, string]> = [];
+  let start = from;
+  while (start <= to) {
+    const d = new Date(`${start}T00:00:00Z`);
+    const endOfMonth = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).toISOString().slice(0, 10);
+    const end = endOfMonth < to ? endOfMonth : to;
+    out.push([start, end]);
+    start = addDays(end, 1);
+  }
+  return out;
+}
+function daysBetween(a: string, b: string): number {
+  return Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86400000);
+}
 function localToday(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -96,9 +126,29 @@ export function createVouchers(deps: VoucherDeps): Vouchers {
   let lastResult: VouchersResult | null = null;
   const req = buildVoucherRequest();
 
-  async function read(company: string, from: string, to: string, alterAbove: number | null): Promise<Row[]> {
+  const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+
+  /** Read one date range; when Tally times out, wait, then read the two halves (up to MAX_SPLITS levels). */
+  async function read(company: string, from: string, to: string, alterAbove: number | null, depth = 0): Promise<Row[]> {
+    try {
+      return await readOnce(company, from, to, alterAbove);
+    } catch (e) {
+      const timedOut = e instanceof TallyError && e.detail === 'TALLY_TIMEOUT';
+      if (!timedOut || depth >= MAX_SPLITS || from >= to) throw e;
+      const mid = addDays(from, Math.floor(daysBetween(from, to) / 2));
+      logger.warn('tally', 'voucher range timed out, reading it in halves', { from, to, depth });
+      await sleep(SPLIT_PAUSE_MS);
+      const first = await read(company, from, mid, alterAbove, depth + 1);
+      const second = await read(company, addDays(mid, 1), to, alterAbove, depth + 1);
+      return [...first, ...second];
+    }
+  }
+
+  async function readOnce(company: string, from: string, to: string, alterAbove: number | null): Promise<Row[]> {
     const filters = alterAbove !== null ? [{ name: 'LBChanged', formula: `$AlterID > ${Math.trunc(alterAbove)}` }] : undefined;
-    const rows = await deps.client.collection(req.id, req.fields, { type: req.type, fetch: req.fetch, filters, company, fromDate: ymd(from), toDate: ymd(to) });
+    const rows = await deps.client.collection(req.id, req.fields, {
+      type: req.type, fetch: req.fetch, filters, company, fromDate: ymd(from), toDate: ymd(to), timeoutMs: VOUCHER_TIMEOUT_MS, retries: 0,
+    });
     // the window is also enforced here, so a Tally build that ignores SVFROMDATE/SVTODATE cannot leak other periods
     return rows.filter((r) => {
       const d = rowDate(r);
@@ -126,12 +176,14 @@ export function createVouchers(deps: VoucherDeps): Vouchers {
           if (g !== '') byGuid.set(g, r); // later reads win; the lookback read sees the same data
         }
       };
-      put(await read(company, opts.from, opts.to, incremental ? cursor : null));
+      for (const [cf, ct] of monthChunks(opts.from, opts.to)) put(await read(company, cf, ct, incremental ? cursor : null));
       const lookback = opts.lookbackDays ?? 0;
       if (incremental && lookback > 0) {
         const today = opts.today ?? localToday();
         const lf = addDays(today, -lookback);
-        put(await read(company, lf < opts.from ? opts.from : lf, today > opts.to ? opts.to : today, null));
+        const lbFrom = lf < opts.from ? opts.from : lf;
+        const lbTo = today > opts.to ? opts.to : today;
+        if (lbFrom <= lbTo) for (const [cf, ct] of monthChunks(lbFrom, lbTo)) put(await read(company, cf, ct, null));
       }
       const rows = [...byGuid.values()];
       const tables = mapVouchers({ rows, companyGuid, companyState: deps.getCompanyState(), masters });
