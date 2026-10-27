@@ -26,6 +26,41 @@ export const DESKTOP_DEFAULTS = {
   logKeepFiles: 7,
 } as const;
 
+/**
+ * Milestone 9 (Phase 43): voucher batching, progress and update controls. Design: docs/specs/voucher-batching.md,
+ * sync-progress.md, update-controls.md. Values marked `assumed` there are tunable here and nowhere else.
+ */
+export const VOUCHER_BATCH = {
+  /** Vouchers per request when the user changed nothing (the proven predecessor's value, assumed). */
+  sizeDefault: 500,
+  /** Allowed range of the user setting `voucherBatchSize` (assumed). */
+  sizeMin: 50,
+  sizeMax: 5000,
+  /** Adaptive backoff never goes below this many vouchers per request. */
+  adaptiveFloor: 25,
+  /** Per-request timeout for a voucher read, in seconds (H5 value, 180 s). */
+  voucherTimeoutS: 180,
+  /** Wait after a timed-out request so Tally can finish the abandoned work, in seconds (H5 value). */
+  splitPauseS: 15,
+  /** Pause between two batches so Tally can serve its own user (assumed). */
+  voucherBatchPauseMs: 250,
+} as const;
+
+/** Progress events (docs/specs/sync-progress.md). */
+export const PROGRESS_DEFAULTS = {
+  /** At most one `lb:sync:progress` event per this many ms, plus one on every stage change and on completion. */
+  progressThrottleMs: 1000,
+  /** Weights of the overall percent, summing to 100 (assumed). */
+  stageWeights: { masters: 10, counting: 5, vouchers: 75, applying: 8, closing: 2 },
+} as const;
+
+/** Update controls (docs/specs/update-controls.md). */
+export const UPDATE_CONTROLS = {
+  /** Minimum gap between two manual update checks, in seconds (registry polling budget, SHARED_CONTRACTS 4.1). */
+  manualUpdateCheckMinGapS: 30,
+  autoUpdateCheckDefault: true,
+} as const;
+
 /** docs/shared/constants.json `sync` (chunk limits, ttl, fixed table order; SYNC_SPEC sections 3 and 5). */
 export const SYNC_DEFAULTS = {
   chunkMaxPayloadBytes: 200000,

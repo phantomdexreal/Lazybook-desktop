@@ -8,8 +8,9 @@ STATUS: IMPLEMENTED (Phase 35; Tally, passphrase and license blocks from Phases 
 import { useEffect, useState } from 'react';
 import { useTheme } from '../theme/ThemeProvider';
 import { PageHeader } from '../components/Shell';
-import type { ActivationState, CryptoStatusView, PairingView, SettingsView, TallyDetectionView, ThemeMode } from '../../shared/ipc';
-import { fyText, isDirty, toForm, toPatch, validate, type FormState } from '../lib/settingsForm';
+import type { ActivationState, CryptoStatusView, PairingView, SettingsView, TallyDetectionView, ThemeMode, UpdateView } from '../../shared/ipc';
+import { BATCH_PRESETS, autoUpdatePatch, batchSizeDefaultText, batchSizeError, batchSizeHelp, batchSizePatch, fyText, isDirty, toForm, toPatch, validate, type FormState } from '../lib/settingsForm';
+import { canCheckNow, checkWaitSeconds, notesText, statusLine } from '../lib/updateView';
 
 const MODES: Array<{ id: ThemeMode; label: string }> = [
   { id: 'system', label: 'System' },
@@ -295,6 +296,163 @@ function PreferencesBlock() {
   );
 }
 
+/** Phase 47: vouchers per Tally request. Saved with its own button; a change applies from the next sync run. */
+function SyncingBlock() {
+  const [s, setS] = useState<SettingsView | null>(null);
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  useEffect(() => {
+    void window.lb.settings.get().then((v) => {
+      setS(v);
+      setText(String(v.voucherBatchSize));
+    });
+  }, []);
+  if (!s) return null;
+  const problem = batchSizeError(text, s);
+  const patch = problem ? {} : batchSizePatch(text, s);
+  const dirty = Object.keys(patch).length > 0;
+  const save = async () => {
+    setBusy(true);
+    try {
+      const r = await window.lb.settings.set(patch);
+      setS(r.settings);
+      setText(String(r.settings.voucherBatchSize));
+      setMsg(r.ok ? { ok: true, text: 'Saved. It applies from the next sync.' } : { ok: false, text: r.message });
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <section aria-labelledby="syncing" className="mt-6 max-w-xl rounded-lb-lg border border-lb-border bg-lb-surface p-6">
+      <h2 id="syncing" className="m-0 mb-4 text-base font-semibold text-lb-text">Syncing</h2>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!problem && dirty) void save();
+        }}
+      >
+        <label htmlFor="set-batch" className="mb-1 block text-sm text-lb-muted">Vouchers per batch</label>
+        <input
+          id="set-batch"
+          inputMode="numeric"
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value);
+            setMsg(null);
+          }}
+          className={inputCls}
+        />
+        {problem ? <p role="alert" className="m-0 mt-1 text-xs text-lb-danger">{problem}</p> : null}
+        <div className="mt-2 flex flex-wrap items-center gap-2" role="group" aria-label="Presets">
+          {BATCH_PRESETS.map((n) => (
+            <button
+              key={n}
+              type="button"
+              aria-pressed={text.trim() === String(n)}
+              onClick={() => {
+                setText(String(n));
+                setMsg(null);
+              }}
+              className={`lb-seg rounded-lb-md border border-lb-border-strong px-3 py-1 text-sm ${text.trim() === String(n) ? 'bg-lb-accent text-lb-accent-contrast' : 'bg-lb-sunken text-lb-text hover:bg-lb-surface-raised'}`}
+            >
+              {n}
+            </button>
+          ))}
+          <button
+            type="button"
+            className="text-sm text-lb-muted underline"
+            onClick={() => {
+              setText(batchSizeDefaultText());
+              setMsg(null);
+            }}
+          >
+            Reset to default
+          </button>
+        </div>
+        <p className="mb-0 mt-3 text-xs text-lb-muted">{batchSizeHelp(s)}</p>
+        <div className="mt-5 flex items-center gap-3">
+          <button type="submit" disabled={busy || !!problem || !dirty} className="rounded-lb-md bg-lb-accent px-4 py-2 text-sm text-lb-accent-contrast disabled:opacity-50">{busy ? 'Saving' : 'Save'}</button>
+          {msg ? <span role="status" className={`text-sm ${msg.ok ? 'text-lb-success' : 'text-lb-danger'}`}>{msg.text}</span> : null}
+        </div>
+      </form>
+    </section>
+  );
+}
+
+/** Phase 47: automatic update switch (saved at once), Check now, status line, release notes as plain text, Restart and update. */
+function UpdatesBlock() {
+  const [s, setS] = useState<SettingsView | null>(null);
+  const [u, setU] = useState<UpdateView | null>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  useEffect(() => {
+    void window.lb.settings.get().then(setS);
+    void window.lb.update.state().then(setU);
+  }, []);
+  const downloading = u?.phase === 'downloading';
+  useEffect(() => {
+    // no event channel for updates: refresh fast while a download runs, slowly otherwise
+    const t = window.setInterval(() => {
+      setNowMs(Date.now());
+      void window.lb.update.state().then(setU);
+    }, downloading ? 1000 : 5000);
+    return () => window.clearInterval(t);
+  }, [downloading]);
+  if (!s || !u) return null;
+  const toggle = async (on: boolean) => {
+    setErr(null);
+    const r = await window.lb.settings.set(autoUpdatePatch(on));
+    setS(r.settings);
+    if (!r.ok) setErr(r.message);
+    setU(await window.lb.update.state());
+  };
+  const check = async () => {
+    setBusy(true);
+    setErr(null);
+    try {
+      setU(await window.lb.update.check());
+    } catch {
+      setErr('The check could not be completed. Try again.');
+    } finally {
+      setBusy(false);
+      setNowMs(Date.now());
+    }
+  };
+  const wait = checkWaitSeconds(u, nowMs);
+  const notes = u.phase === 'idle' ? null : notesText(u.notes);
+  return (
+    <section aria-labelledby="updates" className="mt-6 max-w-xl rounded-lb-lg border border-lb-border bg-lb-surface p-6">
+      <h2 id="updates" className="m-0 mb-4 text-base font-semibold text-lb-text">Updates</h2>
+      <dl className="m-0 mb-4 grid grid-cols-[8rem_1fr] gap-y-2 text-sm">
+        <dt className="text-lb-muted">Current version</dt><dd className="m-0 text-lb-text">{u.currentVersion}</dd>
+      </dl>
+      <label className="flex items-center gap-2 text-sm text-lb-text">
+        <input type="checkbox" role="switch" checked={s.autoUpdateCheck} onChange={(e) => void toggle(e.target.checked)} />
+        Check for updates automatically
+      </label>
+      {!s.autoUpdateCheck ? <p className="m-0 mt-1 text-xs text-lb-muted">Automatic checks are off. An update that is required to keep using LazyBooks is still installed.</p> : null}
+      <p role="status" className="mb-0 mt-4 text-sm text-lb-text">{statusLine(u, nowMs, busy)}</p>
+      {u.phase === 'downloading' && u.progress ? (
+        <div className="mt-2 h-2 w-full overflow-hidden rounded-lb-md bg-lb-sunken" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={u.progress.percent}>
+          <div className="h-full bg-lb-accent" style={{ width: `${u.progress.percent}%` }} />
+        </div>
+      ) : null}
+      {notes ? <pre className="mb-0 mt-3 max-h-40 overflow-auto whitespace-pre-wrap rounded-lb-md bg-lb-sunken p-3 text-xs text-lb-muted">{notes}</pre> : null}
+      {err ? <p role="alert" className="m-0 mt-2 text-xs text-lb-danger">{err}</p> : null}
+      <div className="mt-5 flex items-center gap-3">
+        <button type="button" disabled={!canCheckNow(u, nowMs, busy)} onClick={() => void check()} className="rounded-lb-md bg-lb-accent px-4 py-2 text-sm text-lb-accent-contrast disabled:opacity-50">
+          {busy ? 'Checking' : wait > 0 ? `Check now (${wait} s)` : 'Check now'}
+        </button>
+        {u.phase === 'ready' ? (
+          <button type="button" onClick={() => void window.lb.update.install()} className="rounded-lb-md border border-lb-border-strong bg-lb-sunken px-4 py-2 text-sm text-lb-text hover:bg-lb-surface-raised">Restart and update</button>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 export function SettingsPage() {
   const { themes, theme, mode, invalidCustom, setTheme, setMode } = useTheme();
   return (
@@ -344,6 +502,8 @@ export function SettingsPage() {
         ) : null}
       </section>
       <PreferencesBlock />
+      <SyncingBlock />
+      <UpdatesBlock />
       <TallyBlock />
       <SecurityBlock />
       <LicenseBlock />

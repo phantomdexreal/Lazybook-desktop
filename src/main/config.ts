@@ -13,7 +13,7 @@ STATUS: IMPLEMENTED (Phase 3)
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { z } from 'zod';
-import { CONFIG_DEFAULTS, DESKTOP_DEFAULTS } from '../shared/constants';
+import { CONFIG_DEFAULTS, DESKTOP_DEFAULTS, UPDATE_CONTROLS, VOUCHER_BATCH } from '../shared/constants';
 import { logger } from './logger';
 
 export const CONFIG_VERSION = 1;
@@ -35,6 +35,10 @@ const ConfigSchema = z.object({
   paused: z.boolean(),
   /** Interface language (Phase 35). Only English exists today; `.default` lets older files without the key load unchanged. */
   language: z.enum(['en']).default('en'),
+  /** Vouchers per Tally request (Phase 43, docs/specs/voucher-batching.md section 5). `.default` so older files load unchanged. */
+  voucherBatchSize: z.number().int().min(VOUCHER_BATCH.sizeMin).max(VOUCHER_BATCH.sizeMax).default(VOUCHER_BATCH.sizeDefault),
+  /** Look for updates by itself (Phase 43, docs/specs/update-controls.md). */
+  autoUpdateCheck: z.boolean().default(UPDATE_CONTROLS.autoUpdateCheckDefault),
   theme: z.object({
     slug: z.string(),
     mode: z.enum(['system', 'light', 'dark']),
@@ -60,6 +64,8 @@ export function defaultConfig(): Config {
     cloudCopy: false,
     paused: false,
     language: 'en',
+    voucherBatchSize: VOUCHER_BATCH.sizeDefault,
+    autoUpdateCheck: UPDATE_CONTROLS.autoUpdateCheckDefault,
     theme: { slug: 'obsidian-violet', mode: 'system' },
   };
 }

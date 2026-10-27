@@ -187,6 +187,9 @@ const rejects = async (p, detail) => {
   c2 = mk(1, { post: flaky('timeout', 99), sleep: sleeper });
   await rejects(c2.exportData('<ENVELOPE/>'), 'TALLY_TIMEOUT');
   assert.equal(calls, 3, 'exports retry after a timeout');
+  calls = 0;
+  await rejects(c2.exportData('<ENVELOPE/>', { retries: 0 }), 'TALLY_TIMEOUT');
+  assert.equal(calls, 1, 'a per-call retries: 0 sends a heavy export exactly once');
   const impXml = '<ENVELOPE><HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER></ENVELOPE>';
   for (const kind of ['timeout', 'reset', 'other']) {
     calls = 0;

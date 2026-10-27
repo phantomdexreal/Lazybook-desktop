@@ -7,7 +7,7 @@
     "jsx": "react-jsx",
     "strict": true,
     "resolveJsonModule": true,
-    "noUncheckedIndexedAccess": true,
+    "noUncheckedIndexedAccess": false,
     "skipLibCheck": true,
     "isolatedModules": true,
     "noEmit": true

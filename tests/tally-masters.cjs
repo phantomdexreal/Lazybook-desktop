@@ -65,7 +65,7 @@ const fake = (handler) => new Promise((resolve) => {
   const tables = Object.keys(M.MASTER_TABLES);
   assert.equal(tables.length, 18);
   for (const t of tables) {
-    const exp = table(t);
+    const exp = t === 'tm_employee' ? [] : table(t); // Employee is not a Tally object type: never requested, always empty
     assert.equal(res.tables[t].length, exp.length, `${t}: row count`);
     assert.deepEqual(res.tables[t], exp, `${t}: rows equal fixtures/tables/${t}.json`);
     if (exp.length) assert.deepEqual(Object.keys(res.tables[t][0]), Object.keys(exp[0]), `${t}: column order`);
@@ -98,7 +98,7 @@ const fake = (handler) => new Promise((resolve) => {
   const s = await fake((b, res2) => { const id = /<ID>([^<]+)<\/ID>/.exec(b)?.[1]; seen.push(id); res2.end(answers[id] ?? wrap('')); });
   const m2 = M.createMasters({ client: mkClient(s.port), getCompanyName: () => 'C', getCompanyGuid: () => 'cg', getAsOf: () => AS_OF });
   const r2 = await m2.pull();
-  assert.deepEqual(seen, plan.map((r) => r.id), 'one request per master kind, in order, serialised');
+  assert.deepEqual(seen, plan.map((r) => r.id).filter((id) => id !== 'LBEmployees'), 'one request per master kind, in order, serialised (Employee is never sent: not a Tally object type)');
   const g = Object.fromEntries(r2.tables.tm_group.map((x) => [x.name, x]));
   assert.equal(g.Top.reserved_root, 'Sundry Debtors');
   assert.equal(g.Child.reserved_root, 'Sundry Debtors', 'case-insensitive parent match walks to the reserved root');
@@ -135,6 +135,13 @@ const fake = (handler) => new Promise((resolve) => {
   const m3 = M.createMasters({ client: mkClient(s3.port), getCompanyName: () => 'C', getCompanyGuid: () => 'cg', getAsOf: () => AS_OF });
   await assert.rejects(m3.pull());
   assert.equal(m3.last(), null, 'a failed pull leaves no half result');
+  // an optional master (TaxUnit) refused by Tally is skipped; a required one still aborts
+  failAt = 'LBTaxUnits';
+  const rOpt = await m3.pull();
+  assert.equal(rOpt.counts.tm_gst_registration, 0, 'refused optional master reads as empty');
+  assert.ok(m3.last() !== null, 'the rest of the pull still completes');
+  failAt = 'LBGodowns';
+  await assert.rejects(m3.pull(), 'a required master still aborts the pull');
   failAt = '';
   assert.equal((await m3.pull()).counts.tm_ledger, 0);
   s3.server.close();

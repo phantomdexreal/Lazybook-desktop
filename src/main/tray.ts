@@ -17,6 +17,8 @@ export interface TrayExtras {
   pwa?: { available: () => boolean; open: () => void };
   /** Number of entries waiting for Tally; shown in the tooltip (the HOST_BRIDGE contract has no badge method). */
   badge?: () => number;
+  /** Phase 46: text such as `syncing 26%` while a sync runs, null otherwise; shown in the tooltip. */
+  syncText?: () => string | null;
 }
 let extras: TrayExtras = {};
 
@@ -77,7 +79,9 @@ export function createTray(showWindow: () => void, opts: TrayExtras = {}): void 
   const refresh = (): void => {
     const waiting = extras.badge?.() ?? 0;
     const base = isPaused() ? `${APP_NAME} (paused)` : APP_NAME;
-    tray?.setToolTip(waiting > 0 ? `${base} - ${waiting} waiting` : base);
+    const sync = extras.syncText?.() ?? null;
+    const tip = waiting > 0 ? `${base} - ${waiting} waiting` : base;
+    tray?.setToolTip(sync ? `${tip} - ${sync}` : tip);
     tray?.setContextMenu(buildMenu(showWindow));
   };
   refreshFn = refresh;

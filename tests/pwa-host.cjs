@@ -126,7 +126,7 @@ fs.writeFileSync(path.join(tmp, 'secret.txt'), 'nope');
   assert.match(idx, /registerSchemesAsPrivileged/); assert.match(idx, /isTrustedSender\(e\.senderFrame\?\.url/); assert.match(idx, /embedded_pwa_desktop'\] === true/);
   assert.match(idx, /sandbox: true, partition: 'persist:lb-pwa'/); assert.match(idx, /setPermissionRequestHandler/); assert.match(idx, /will-navigate/);
   assert.match(read('electron.vite.config.ts'), /host: resolve\(process\.cwd\(\), 'src\/preload\/host\.ts'\)/);
-  assert.match(read('electron-builder.yml'), /from: resources\/pwa\n\s+to: pwa/);
+  assert.match(read('electron-builder.yml'), /from: resources\/pwa\r?\n\s+to: pwa/);
   ok('stub page calls every method and is offline-safe; preload exposes the contract with matching capabilities; main, vite and builder wiring');
   console.log(`PASS ${n} checks`);
 })().catch((e) => { console.error('FAIL', e); process.exit(1); });

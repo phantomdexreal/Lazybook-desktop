@@ -1,0 +1,30 @@
+// webpack module #1096 (extracted from electron/background/background.bundle.js, BA Mobile Connector 8.4.41)
+// Minified original; identifiers are mangled. Cross-module refs appear as r(<id>).
+
+module.exports_wrapper = function (e, t, r) {
+  "use strict";
+  Object.defineProperty(t, "__esModule", { value: !0 });
+  var n = "##PARAM##",
+    a =
+      "<ENVELOPE><HEADER><VERSION>1</VERSION><TALLYREQUEST>Export</TALLYREQUEST><TYPE>Function</TYPE><ID>$$LicenseInfo</ID></HEADER><BODY><DESC><FUNCPARAMLIST><PARAM>" +
+      n +
+      "</PARAM></FUNCPARAMLIST></DESC></BODY></ENVELOPE>",
+    i = (function () {
+      function e() {}
+      return (
+        (e.prototype.getBody = function (e) {
+          var t = a;
+          return (t = t.replace(n, e));
+        }),
+        (e.PARAM_SERIAL_NUMBER = "Serial Number"),
+        (e.PARAM_ISINDIAN = "IsIndian"),
+        (e.PARAM_ACCOUNT_ID = "Account ID"),
+        (e.PARAM_IS_GOLD = "IsGold"),
+        (e.PARAM_IS_SILVER = "IsSilver"),
+        (e.PARAM_IS_EDUCATIONAL_MODE = "IsEducationalMode"),
+        (e.PARAM_IS_LICENSED_MODE = "IsLicensedMode"),
+        e
+      );
+    })();
+  t.default = i;
+};

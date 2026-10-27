@@ -1,4 +1,4 @@
-# PHASES — LazyBooks Desktop (Connector) (42 phases)
+# PHASES — LazyBooks Desktop (Connector) (48 phases: 1–42 complete, Milestone 9 = 43–48 planned)
 
 **Edit in place** (str_replace). Never reorder or renumber a completed phase. If a phase is too big for one session, split it, renumber forward, and record the split in `PHASE_STATUS.md`.
 
@@ -453,3 +453,71 @@ Format: **Goal · Depends on · In scope · Out of scope · Key files · Legacy 
 **Key files:** `.github/workflows/release.yml`
 **Legacy reference:** — (new in LazyBooks / infrastructure)
 **How to verify locally:** Tag builds an installer and a draft release in the master.
+
+---
+
+## MILESTONE 9 — Large-Company Reliability & Controls (Phases 43–48)
+*Exit: a company with 100k or more vouchers syncs without Tally freezing or the app closing, vouchers are read in user-sized batches, the Status page shows a progress bar (how many vouchers must be pulled, how many are done), and the user can switch automatic update checks on or off and check by hand.*
+
+**Owner decisions (2026-10-27, do not reopen):** (1) the current Tally extraction stays as it is: no rewrite of request shape, FETCH lists, parsing or mappers, and no port of the older app's report-based extraction; batching is added around it; (2) the vouchers-per-batch number is a user setting; (3) progress is visible with totals; (4) automatic update checks have an on/off switch in the app.
+**Read before any phase of this milestone:** `docs/specs/voucher-batching.md`, `docs/specs/sync-progress.md`, `docs/specs/update-controls.md`, `docs/specs/tally-real-world-notes.md`, and the "Hotfixes after Phase 42" entry in `PHASE_STATUS.md` (the code already contains hotfixes H1 to H5; do not undo them). The specs are DESIGN documents written before the code: check them against the code, amend in place, never rewrite.
+**Rules for this milestone:** no shared doc (`docs/shared`) is changed; new constants live in `src/shared/constants.ts`; extend `API_CONTRACTS.md` before touching `ipc.ts`; every phase keeps all earlier tests passing (`node tests/<name>.cjs` for each, with `NODE_PATH=<project>/node_modules`); real-Tally behaviour that cannot be tested here is recorded as a `TW-*` item in `docs/specs/tally-real-world-notes.md` and in Known issues, never silently assumed.
+
+### Phase 43 — Contracts, config keys, constants (no behaviour change)
+**Goal:** Everything the later phases need exists, is validated and is typed; nothing observable changes.
+**Depends on:** Phase 42 and hotfixes H1 to H5
+**Spec:** `voucher-batching.md` (sections 5, 8), `sync-progress.md` (Event), `update-controls.md` (Settings key, IPC and types)
+**In scope:** Move the "Planned (Milestone 9)" block in `API_CONTRACTS.md` to the real contract and amend it where the code forces a change. `src/main/config.ts`: `voucherBatchSize` (int 50 to 5000, default 500) and `autoUpdateCheck` (boolean, default true), both with `.default` so older config files load unchanged. `src/shared/constants.ts` (`DESKTOP_DEFAULTS` and siblings): batch size default, min, max and adaptive floor (25), `voucherTimeoutS` (180), `splitPauseS` (15), `voucherBatchPauseMs` (250), `progressThrottleMs` (1000), `manualUpdateCheckMinGapS` (30), progress stage weights. `src/shared/ipc.ts`: types `SyncProgress`, `SettingsView` and `SettingsPatch` additions (`voucherBatchSize`, `autoUpdateCheck`), `UpdateView` additions (`currentVersion`, `autoCheck`, `lastCheckedAt`, `progress`), channel `lb:sync:progress` and `LbApi.sync.onProgress`; `src/preload/index.ts` to match; `src/main/settings.ts` validation (strict, all-or-nothing, out-of-range refused with the field named). Replace the literal 180 s and 15 s in `vouchers/index.ts` with the constants (same values).
+**Out of scope:** Any Tally request change, any UI, any scheduler change.
+**Key files:** `src/main/config.ts`, `src/main/settings.ts`, `src/shared/constants.ts`, `src/shared/ipc.ts`, `src/preload/index.ts`, `API_CONTRACTS.md`, `tests/config-secrets.cjs`, `tests/settings.cjs`
+**Legacy reference:** — (new in LazyBooks / infrastructure)
+**How to verify locally:** `config-secrets` test: an old config file without the new keys loads with the defaults; `settings` test: valid patches are saved, out-of-range and wrong-type patches are refused with nothing saved; `npm run typecheck` is clean; every earlier test still passes.
+
+### Phase 44 — Tally paging primitives (paged read, count, mock support)
+**Goal:** The Tally layer can ask for "vouchers start+1 to start+size" and for "how many vouchers", on top of the current extraction.
+**Depends on:** Phase 43
+**Spec:** `voucher-batching.md` (sections 3, 4, 7, 8)
+**In scope:** In-place extension of `src/main/tally/xml.ts` `buildCollectionRequest` so a request can carry compute variables, compute lines and ordered filters (the paging variable and the paging filter), with output byte-identical when unused (golden test over every existing request). New `src/main/tally/vouchers/paging.ts`: `readPage(company, from, to, start, size, alterAbove)` reusing the existing voucher request, fields and fetch list unchanged; `countWindow(company, from, to)` using the existing `LBVoucherGuids` request (per month when needed); detection of "paging ignored" (page longer than the size, or equal first GUID on different pages); adaptive halving of the size on a timeout (floor 25, 15 s pause, injectable sleep). Extend `tools/mock-tally` so it honours the paging filter by slicing the voucher list in document order, with a switch that makes it ignore the filter. `src/main/tally/client.ts` is NOT changed beyond what the specs need.
+**Out of scope:** The scheduler, progress, UI, persistence, replacing the extraction or the mappers.
+**Key files:** `src/main/tally/xml.ts`, `src/main/tally/vouchers/paging.ts`, `tools/mock-tally/*`, `tests/tally-paging.cjs`, `tests/tally-vouchers.cjs`
+**Legacy reference:** — (behaviour of the proven older connector is restated in `voucher-batching.md`; clean-room, no code copied)
+**How to verify locally:** Against the mock: pages of sizes 1, 7, 500 and larger than the total return every voucher exactly once and in order; boundary cases with a date window and with an AlterID filter; the last short page ends the loop; "paging ignored" is detected and reported; the golden XML of all existing requests is unchanged; a timeout halves the size and retries the same page once. Real-Tally items `TW-PAGING-01` to `TW-PAGING-03` are added to Known issues as manual-verify.
+
+### Phase 45 — Batched voucher pull in the sync cycle (bounded memory, resume)
+**Goal:** Full and incremental voucher reads run as batches of the configured size; peak memory stays near one batch; a crash resumes instead of restarting; devices never see a half-applied pull.
+**Depends on:** Phase 44, Phase 18 (scheduler), Phase 16 (upsert layer)
+**Spec:** `voucher-batching.md` (sections 5 to 8)
+**In scope:** First write the atomicity decision (Option A staging on disk, or Option B bounded in-memory accumulation) under the Phase 45 entry in `PHASE_STATUS.md`; Option A is recommended. `createVouchers().pull()` (or a sibling `pullBatched()`) yields batches through a callback, outer loop over month windows, inner loop over pages, the pause between batches, per-batch isolation (one failed batch aborts the cycle cleanly, nothing half-applied). Checkpoint `sync-run.json` after every batch with resume rules (discard when stale or when company or AlterID no longer match). The scheduler (`sync/scheduler.ts`, `sync/plan.ts`, `sync/store.ts`) uses the batched pull in place; the existing guards (`checkCount`, `checkDeleted`) still run before the final commit. Read `voucherBatchSize` from the config at the start of each run. Call an injected `onProgress` hook with counts (no UI yet). `tools/gen-big-company.mjs`: generates a mock company with N vouchers (50k and 200k presets) for tests.
+**Out of scope:** Progress UI, Settings UI, changing mappers, columns, shared contracts, the masters pull.
+**Key files:** `src/main/tally/vouchers/index.ts`, `src/main/tally/vouchers/paging.ts`, `src/main/sync/scheduler.ts`, `src/main/sync/plan.ts`, `src/main/sync/store.ts`, `tools/gen-big-company.mjs`, `tests/sync-batching.cjs`, `tests/sync-scheduler.cjs`
+**Legacy reference:** — (new in LazyBooks / infrastructure)
+**How to verify locally:** The existing 19-check `sync-scheduler` test still passes; a batched full pull of the fixture company equals the shared fixtures and equals the single-request pull for batch sizes 1, 7 and 500; kill after batch k then restart resumes and the vault equals the fixtures; kill before the final commit leaves the live vault untouched; the "paging ignored" fallback finishes the sync month by month; a 50k-voucher generated company completes with peak memory well below the whole-company figure (record the numbers); a size change between runs applies to the next run only.
+
+### Phase 46 — Progress events + Status progress bar
+**Goal:** While a sync runs, the user sees how many vouchers must be pulled and how many are done, as a progress bar.
+**Depends on:** Phase 45, Phase 33 (Status page)
+**Spec:** `sync-progress.md`
+**In scope:** `src/main/sync/progress.ts` (pure tracker: stage changes, one event per second, rate over the last 5 batches, ETA rules, resume flag), the scheduler and batcher feed it, main pushes `lb:sync:progress`, `src/renderer/lib/progressView.ts` (texts and percent), `src/renderer/components/SyncProgress.tsx` used by `Status.tsx` (headline with counts and percent, month, batch x of y, speed, time left, "Resuming from", failure line with the retry time, idle collapse, no flashing on quiet cycles, `role="progressbar"`, reduced motion, light and dark tokens), tray tooltip text, optional taskbar progress. No names anywhere.
+**Out of scope:** Settings controls, a cancel button, any change to what is pulled.
+**Key files:** `src/main/sync/progress.ts`, `src/renderer/lib/progressView.ts`, `src/renderer/components/SyncProgress.tsx`, `src/renderer/pages/Status.tsx`, `src/main/index.ts`, `tests/sync-progress.cjs`
+**Legacy reference:** — (new in LazyBooks / infrastructure)
+**How to verify locally:** Pure tests for every stage, null totals, `done` greater than `total`, ETA hidden before 2 batches, throttle; an event-sequence test driving a generated 5k-voucher company shows monotonic done counts and ends in `done`; no company or party names in any event (grep and a fixture check); `npm run typecheck` clean. Manual on a real machine: the card renders at 1024x700 and 1366x768, light and dark.
+
+### Phase 47 — Settings: vouchers per batch + update controls
+**Goal:** The user sets the batch size and controls update checking from the Settings page.
+**Depends on:** Phase 46, Phase 39 (updater), Phase 35 (settings)
+**Spec:** `voucher-batching.md` (section 5), `update-controls.md`
+**In scope:** `Settings.tsx` gets a "Syncing" block (vouchers per batch: number input, presets 100, 250, 500, 1000, plain-language help, reset to default, "applies from the next sync") and an "Updates" block (current version, switch "Check for updates automatically", "Check now" button, status line, release notes as plain text, download percent, "Restart and update"). `src/renderer/lib/settingsForm.ts` builds the patches. `src/main/updater.ts` honours `autoUpdateCheck` (timer off when false; forced updates still acted on; manual check refreshes the bootstrap, enforces the 30 s gap, returns the extended `UpdateView`; `download-progress` feeds `progress`). The Status update banner reads the same state.
+**Out of scope:** Install-on-quit options, channels, a changelog viewer beyond plain text, any shared contract change.
+**Key files:** `src/renderer/pages/Settings.tsx`, `src/renderer/lib/settingsForm.ts`, `src/main/updater.ts`, `src/main/settings.ts`, `src/main/index.ts`, `tests/settings.cjs`, `tests/updater.cjs`
+**Legacy reference:** — (new in LazyBooks / infrastructure)
+**How to verify locally:** `settings` test: batch size and the switch round trip through the config and invalid values are refused; `updater` test with the fake driver: switch off means no timer, manual check works, forced update still downloads, the gap is enforced, progress passes through; `npm run typecheck` clean; all earlier tests pass. Manual: the page renders, the switch survives a restart, a published higher version is found by "Check now".
+
+### Phase 48 — Large-company QA, tuning and release notes
+**Goal:** The numbers behind the defaults are measured, the real-Tally checklist is ready for the owner, and the release notes are written.
+**Depends on:** Phase 47
+**In scope:** Run the generated 50k and 200k companies with batch sizes 100, 500 and 1000 and record time and peak memory in the Phase 48 entry; tune the default size and the memory cap (Option B) if needed, with the measured reason; extend `docs/soak_test.md` with a "real Tally, large company" procedure (batch size ladder, what to watch in Tally and in the Logs page, what to send back for `TW-CRASH-01`); finalise the `TW-*` checklist in `docs/specs/tally-real-world-notes.md`; update Known issues; `CHANGELOG.md` notes for the release; the release itself uses the Phase 42 pipeline (tag, workflow, installer) and is done by the owner.
+**Out of scope:** New features, a rewrite of the extraction, signing.
+**Key files:** `docs/soak_test.md`, `docs/specs/tally-real-world-notes.md`, `CHANGELOG.md`, `PHASE_STATUS.md`
+**Legacy reference:** — (new in LazyBooks / infrastructure)
+**How to verify locally:** The measured table exists in `PHASE_STATUS.md`; every test passes; `npm run typecheck` and `npm run build` pass; the soak document can be followed by someone who has not read the specs.

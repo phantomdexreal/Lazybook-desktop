@@ -75,6 +75,7 @@ jobs:
         run: npm run build
 
       - name: Installer and latest.yml
+        shell: bash
         # generic provider only so that electron-builder writes latest.yml; nothing is published by electron-builder itself
         run: npx electron-builder --win nsis --publish never -c.publish.provider=generic "-c.publish.url=https://github.com/${{ vars.LB_RELEASES_REPO }}/releases/download/${{ env.TAG }}"
 

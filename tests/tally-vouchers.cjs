@@ -100,7 +100,11 @@ const sortBy = (rows, keys) => [...rows].sort((a, b) => keys.map((k) => String(a
   assert.equal(none.mode, 'incremental');
   assert.equal(none.tables.tx_voucher.length, 0, 'nothing changed: nothing pulled');
   assert.equal(none.maxAlterId, cursor);
-  assert.deepEqual(seen[0], { above: cursor, from: '20260401', to: '20270331' });
+  // one request per calendar month (a year in one request times out on a big company): April 2026 .. March 2027, the whole window covered exactly once
+  assert.equal(seen.length, 12, 'twelve monthly requests');
+  assert.deepEqual(seen[0], { above: cursor, from: '20260401', to: '20260430' });
+  assert.deepEqual(seen[11], { above: cursor, from: '20270301', to: '20270331' });
+  assert.ok(seen.every((x, i) => i === 0 || seen[i - 1].to < x.from), 'chunks do not overlap');
   // edit one voucher in Tally: its AlterID moves and its narration changes
   const target = blocks.find((b) => /<NARRATION>/.test(b) && /<ISINVOICE>Yes/.test(b)) ?? blocks[10];
   const tg = guidOf(target);
@@ -120,7 +124,9 @@ const sortBy = (rows, keys) => [...rows].sort((a, b) => keys.map((k) => String(a
   seen.length = 0;
   const lb = await v2.pull({ from: '2026-04-01', to: '2027-03-31', sinceAlterId: cursor + 1, lookbackDays: 7, today: '2026-09-30' });
   assert.ok(lb.guids.includes(og), 'lookback re-read finds a voucher whose AlterID did not move');
-  assert.deepEqual(seen.map((x) => [x.above, x.from, x.to]), [[cursor + 1, '20260401', '20270331'], [-1, '20260923', '20260930']]);
+  assert.equal(seen.length, 13, '12 monthly incremental reads plus the one lookback read');
+  assert.ok(seen.slice(0, 12).every((x) => x.above === cursor + 1));
+  assert.deepEqual(seen.slice(12).map((x) => [x.above, x.from, x.to]), [[-1, '20260923', '20260930']]);
   assert.ok(lb.guids.every((g, i, a) => a.indexOf(g) === i), 'no duplicate vouchers');
   s2.server.close();
 
@@ -135,6 +141,31 @@ const sortBy = (rows, keys) => [...rows].sort((a, b) => keys.map((k) => String(a
   await assert.rejects(v3.pull({ from: '2026-04-01', to: '2027-03-31' }));
   assert.equal(v3.last(), null);
   s3.server.close();
+
+  // 3b. month chunks; a timed-out range is read again in halves, once per level, after a pause; other errors are not split
+  assert.deepEqual(V.monthChunks('2026-04-01', '2026-04-30'), [['2026-04-01', '2026-04-30']]);
+  assert.deepEqual(V.monthChunks('2028-01-15', '2028-03-10'), [['2028-01-15', '2028-01-31'], ['2028-02-01', '2028-02-29'], ['2028-03-01', '2028-03-10']], 'partial edges and a leap February');
+  assert.deepEqual(V.monthChunks('2026-12-31', '2027-01-01'), [['2026-12-31', '2026-12-31'], ['2027-01-01', '2027-01-01']]);
+  const calls = []; let pauses = 0;
+  const stub = {
+    collection: async (id, fields, o) => {
+      calls.push([o.fromDate, o.toDate, o.timeoutMs, o.retries]);
+      if (o.fromDate === '20260401' && o.toDate === '20260430') throw new C.TallyError('LB_TALLY_UNREACHABLE', 'TALLY_TIMEOUT', 'slow', true, id);
+      return [];
+    },
+  };
+  const vs = V.createVouchers({ ...base, client: stub, sleep: async () => { pauses++; }, getCompanyName: () => 'C', getCompanyGuid: () => 'g' });
+  await vs.pull({ from: '2026-04-01', to: '2026-04-30' });
+  assert.deepEqual(calls.map((x) => [x[0], x[1]]), [['20260401', '20260430'], ['20260401', '20260415'], ['20260416', '20260430']], 'month, then its two halves');
+  assert.ok(calls.every((x) => x[2] === V.VOUCHER_TIMEOUT_MS && x[3] === 0), 'long timeout, never retried in place');
+  assert.equal(pauses, 1, 'one pause before the halves');
+  const stuck = { collection: async (id) => { throw new C.TallyError('LB_TALLY_UNREACHABLE', 'TALLY_TIMEOUT', 'slow', true, id); } };
+  const vstuck = V.createVouchers({ ...base, client: stuck, sleep: async () => {}, getCompanyName: () => 'C', getCompanyGuid: () => 'g' });
+  await assert.rejects(vstuck.pull({ from: '2026-04-01', to: '2026-04-30' }), (e) => e.detail === 'TALLY_TIMEOUT', 'gives up after the split limit and reports the timeout');
+  let rejectedCalls = 0;
+  const refusing = { collection: async (id) => { rejectedCalls++; throw new C.TallyError('LB_TALLY_REJECTED', 'TALLY_REJECTED', 'no', false, id); } };
+  await assert.rejects(V.createVouchers({ ...base, client: refusing, sleep: async () => {}, getCompanyName: () => 'C', getCompanyGuid: () => 'g' }).pull({ from: '2026-04-01', to: '2026-04-30' }));
+  assert.equal(rejectedCalls, 1, 'a refusal is not split or repeated');
 
   // 4. mapper edge cases: unresolved names, cancelled, intra vs inter state GST, stock journal direction, exact rounding
   const mapped = V.mapVouchers({

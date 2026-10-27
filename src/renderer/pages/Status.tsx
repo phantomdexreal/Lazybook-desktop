@@ -22,6 +22,8 @@ import { useEffect, useState, type ReactNode } from 'react';
 import type { Status as StatusT, UpdateView } from '../../shared/ipc';
 import { EmptyState } from '../components/EmptyState';
 import { PageHeader } from '../components/Shell';
+import { SyncProgress } from '../components/SyncProgress';
+import { bannerText } from '../lib/updateView';
 import { COUNT_LABELS, FLAG_LABELS, ago, daysLeft, formatCount, headline, until, type Level } from '../lib/statusView';
 
 const LEVEL_TEXT: Record<Level, string> = {
@@ -104,19 +106,13 @@ export function StatusPage() {
         </div>
       </div>
 
+      <SyncProgress lastSyncAt={status.lastSyncAt} nextRunAt={d?.sync?.nextRunAt} nowMs={nowMs} />
+
       {status.update?.available ? (
         <div className="mb-4 flex items-center gap-3 rounded-lb-lg border border-lb-border bg-lb-accent-soft p-3 text-sm text-lb-accent">
           <ArrowCircleUp size={20} weight="duotone" aria-hidden="true" />
           <span className="min-w-0 flex-1">
-            {upd?.phase === 'ready'
-              ? `Version ${upd.version ?? 'newer'} is downloaded and checked.`
-              : upd?.phase === 'downloading'
-                ? `Downloading version ${upd.version ?? 'newer'}.`
-                : upd?.phase === 'error'
-                  ? (upd.message ?? 'The update could not be installed.')
-                  : upd?.phase === 'unsupported'
-                    ? `Version ${status.update.version ?? 'newer'} is available. Updates install from the installed app.`
-                    : `Version ${status.update.version ?? 'newer'} is available.`}
+            {bannerText(upd, status.update.version ?? null)}
           </span>
           {upd?.phase === 'ready' ? (
             <button type="button" className={'lb-seg flex shrink-0 items-center gap-2 rounded-lb-md border border-lb-border bg-lb-surface px-3 py-2 text-sm text-lb-text hover:bg-lb-sunken disabled:opacity-50'} onClick={() => void window.lb.update.install()}>Restart and update</button>

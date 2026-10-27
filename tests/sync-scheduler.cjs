@@ -90,7 +90,7 @@ const ok = (m) => console.log(`ok ${++n} - ${m}`);
       return companyPatch ? { ...c, ...companyPatch } : c;
     },
     masters: { last: () => masters.last(), pull: async () => { calls.mastersPull++; return masters.pull(); } },
-    vouchers: { pull: async (o) => { calls.vouchersPull.push(o); const r = await realVouchers.pull(o); return voucherHook ? voucherHook(r) : r; } },
+    vouchers: { pullBatched: async (o) => { calls.vouchersPull.push(o); return realVouchers.pullBatched({ ...o, onBatch: (t, i) => o.onBatch(voucherHook ? voucherHook(t) : t, i) }); } },
     reconciler: { checkDeleted: async (i) => { calls.deleted++; const r = await realReconciler.checkDeleted(i); return guidHook ? guidHook(r, i) : r; } },
     closing: { read: async () => { calls.closing++; const r = await realClosing.read(); return closingHook ? closingHook(r) : r; } },
     events,
@@ -117,7 +117,7 @@ const ok = (m) => console.log(`ok ${++n} - ${m}`);
   assert.ok(o.written.seq !== null && o.written.inserted > 500);
   const got = dump(vault);
   for (const t of syncTables) {
-    const want = Object.fromEntries(table(t).map((r) => [key(t, r), r]));
+    const want = Object.fromEntries((t === 'tm_employee' ? [] : table(t)).map((r) => [key(t, r), r])); // Employee is not a Tally object type: never requested
     assert.deepEqual(Object.keys(got[t]).sort(), Object.keys(want).sort(), `${t} keys`);
     for (const k of Object.keys(want)) assert.deepEqual(got[t][k], want[k], `${t} row ${k}`);
   }
@@ -163,11 +163,13 @@ const ok = (m) => console.log(`ok ${++n} - ${m}`);
   const edited = vtab.find((v) => table('tx_ledger_line').filter((l) => l.voucher_guid === v.guid).length >= 3 && !v.is_cancelled);
   const lostLine = table('tx_ledger_line').filter((l) => l.voucher_guid === edited.guid).at(-1);
   voucherHook = (r) => {
-    const tables = JSON.parse(JSON.stringify(r.tables));
+    const tables = JSON.parse(JSON.stringify(r));
     tables.tx_voucher = tables.tx_voucher.map((v) => (v.guid === edited.guid ? { ...v, narration: 'edited in tally', alter_id: 106 } : v));
     tables.tx_ledger_line = tables.tx_ledger_line.filter((l) => !(l.voucher_guid === edited.guid && l.line_index === lostLine.line_index));
-    return { ...r, tables, guids: r.guids };
+    return tables;
   };
+  // the mock now honours the date window and the AlterID filter (Phase 44), so the edited voucher is reached through a wide lookback
+  cfg = { ...cfg, lookbackDays: 400 };
   companyPatch = { alter_id_voucher: 106 };
   const h1 = layer.headSeq();
   clock += 300000;
@@ -176,7 +178,8 @@ const ok = (m) => console.log(`ok ${++n} - ${m}`);
   assert.equal(o.action, 'incremental');
   const last = calls.vouchersPull.at(-1);
   assert.equal(last.sinceAlterId, 105);
-  assert.equal(last.lookbackDays, 7);
+  assert.equal(last.lookbackDays, 400);
+  cfg = { ...cfg, lookbackDays: 7 };
   assert.equal(layer.headSeq(), h1 + 1, 'exactly one seq for the whole cycle');
   const v = vault.readTable('tx_voucher').find((x) => x.guid === edited.guid);
   assert.equal(v.narration, 'edited in tally');
@@ -271,7 +274,7 @@ const ok = (m) => console.log(`ok ${++n} - ${m}`);
   vault.db.prepare(`UPDATE "_lb_vault_meta" SET "value"='null' WHERE "key"='sched.memory'`).run();
 
   // 11. incomplete full pull: nothing committed, memory not advanced, retry with backoff
-  voucherHook = (r) => ({ ...r, guids: r.guids.slice(1) });
+  voucherHook = (t) => { const gone = t.tx_voucher[0].guid; return Object.fromEntries(Object.entries(t).map(([k, rows]) => [k, rows.filter((x) => (k === 'tx_voucher' ? x.guid : x.voucher_guid) !== gone)])); };
   await sched.syncNow();
   await idle();
   assert.equal(sched.state().lastOutcome.ok, false);

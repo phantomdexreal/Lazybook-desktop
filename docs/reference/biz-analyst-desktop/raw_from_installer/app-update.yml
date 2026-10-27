@@ -1,0 +1,7 @@
+provider: spaces
+name: bizanalyst
+region: sgp1
+path: x64
+acl: public-read
+channel: latest
+updaterCacheDirName: bizanalyst-sync-updater

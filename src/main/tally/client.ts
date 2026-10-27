@@ -89,6 +89,8 @@ export interface CallOptions {
   priority?: TallyPriority;
   /** Per-call timeout override (large exports). */
   timeoutMs?: number;
+  /** Per-call retry override. Use 0 for heavy exports: Tally keeps working on an abandoned request, so repeating it only stacks the load. */
+  retries?: number;
 }
 
 export interface CollectionOptions extends CallOptions, Omit<CollectionSpec, 'name' | 'type' | 'fields'> {
@@ -173,9 +175,9 @@ export function createTallyClient(deps: TallyClientDeps): TallyClient {
   }
 
   /** One HTTP exchange with retries. `isImport`: only retry when no connection was made at all. */
-  async function exchange(xml: string, isImport: boolean, timeoutMs: number): Promise<{ text: string; id: string }> {
+  async function exchange(xml: string, isImport: boolean, timeoutMs: number, retriesOverride?: number): Promise<{ text: string; id: string }> {
     const id = requestIdOf(xml);
-    const total = 1 + Math.max(0, retries);
+    const total = 1 + Math.max(0, retriesOverride ?? retries);
     let lastErr: TallyTransportError | null = null;
     for (let attempt = 1; attempt <= total; attempt++) {
       const target = deps.getTarget();
@@ -231,7 +233,7 @@ export function createTallyClient(deps: TallyClientDeps): TallyClient {
   const client: TallyClient = {
     exportData(xml, opts = {}) {
       return enqueue(opts.priority ?? 'sync', async () => {
-        const { text, id } = await exchange(xml, false, opts.timeoutMs ?? defaultTimeout);
+        const { text, id } = await exchange(xml, false, opts.timeoutMs ?? defaultTimeout, opts.retries);
         assertExportOk(text, id);
         return text;
       });
@@ -258,9 +260,9 @@ export function createTallyClient(deps: TallyClientDeps): TallyClient {
     },
 
     async collectionStream(name, fields, options) {
-      const { priority, timeoutMs, type, ...rest } = options;
+      const { priority, timeoutMs, retries: callRetries, type, ...rest } = options;
       const xml = buildCollectionRequest({ ...scopeOf(rest), ...rest, company: scopeOf(rest).company, name, type, fields });
-      const text = await client.exportData(xml, { priority, timeoutMs });
+      const text = await client.exportData(xml, { priority, timeoutMs, retries: callRetries });
       const id = name;
       function* rows(): Generator<Row> {
         try {

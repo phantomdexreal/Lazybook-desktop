@@ -52,8 +52,8 @@ export interface UpsertLayer {
   clear(table: string, companyGuid?: string): OpResult;
   replaceScope(companyGuid: string, from: string, to: string): OpResult;
   deleteChildren(keys: Row[]): OpResult;
-  /** Applies a list of ops in one transaction (all or nothing, one seq). */
-  applyOps(ops: VaultOp[]): OpResult;
+  /** Applies a list (or a lazily produced sequence, Phase 45: staged vouchers streamed in chunks) of ops in one transaction (all or nothing, one seq). */
+  applyOps(ops: Iterable<VaultOp>): OpResult;
   changedSince(cursor: number, opts?: { tables?: string[]; batch?: number }): ChangedSince;
   /** Empties every synced table, the row state and tombstones; devices then need an initial sync (used for a restored Tally, guards.ts). */
   clearVault(): void;
@@ -200,7 +200,7 @@ export function createUpsertLayer(db: Database, model: DataModel): UpsertLayer {
     }
   }
 
-  function run(ops: VaultOp[]): OpResult {
+  function run(ops: Iterable<VaultOp>): OpResult {
     return db.transaction(() => {
       const res = zero();
       const next = session();

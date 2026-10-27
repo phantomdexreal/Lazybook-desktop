@@ -1,11 +1,16 @@
 # CLAUDE MUST READ — LazyBooks Desktop (Connector) — Start Here, Every Session, No Exceptions
 
-You are one of many Claude sessions building **LazyBooks** incrementally (42 phases in this repo, one phase per session). You have no memory of other sessions. Everything you need is in this zip. If something you need is not in the zip, **stop and say so** — do not guess, invent or assume.
+You are one of many Claude sessions building **LazyBooks** incrementally (48 phases in this repo: 1 to 48 complete, Milestone 9 = Phases 43 to 48 done in code; real-Tally checklist pending; one phase per session). You have no memory of other sessions. Everything you need is in this zip. If something you need is not in the zip, **stop and say so** — do not guess, invent or assume.
 
 ---
 
 ## NEVER REWRITE FILES
 Do not rewrite any existing file in full — no `cat > file << EOF` over an existing file, no regenerating `PHASE_STATUS.md`, `API_CONTRACTS.md`, `PROJECT_STRUCTURE.md` or source files. Use `str_replace` for every doc/source edit; append new log rows by `str_replace` on the last unique line. `create_file` is for brand-new files only. A full rewrite is allowed only if a previous `PHASE_STATUS.md` entry explicitly anticipated it (justify it there first). Stub files (`STATUS: STUB` in the first lines) are the exception: replace the stub header with real code (that is implementing, not rewriting).
+
+## MILESTONE 9 (Phases 43 to 48) — start here when your phase is 43 or higher
+Large-company reliability and controls, planned 2026-10-27 after the first real run on a real TallyPrime. Read, in this order, before your phase entry: (1) the "Hotfixes after Phase 42" entry in `PHASE_STATUS.md` (H1 to H5 are already in the code: do not undo them); (2) `docs/specs/voucher-batching.md`; (3) `docs/specs/sync-progress.md` and `docs/specs/update-controls.md` only if your phase touches progress or updates; (4) `docs/specs/tally-real-world-notes.md` for what is known and what is only assumed about a real Tally.
+Owner decisions you must not reopen: **the current Tally extraction stays** (no rewrite of the request shape, FETCH lists, parsing or mappers; no port of the older app's report-based extraction); batching is added around it; the vouchers-per-batch number is a user setting; progress shows totals and done counts; automatic update checks get an on/off switch.
+The owner builds on Windows through GitHub Actions and cannot run Tally here. Anything that needs a real Tally is recorded as a `TW-*` item (Known issues), never claimed as verified. Run every earlier test after your change: `NODE_PATH=<project>/node_modules node tests/<name>.cjs` (Windows cmd: `set NODE_PATH=%CD%\node_modules` then `node tests\<name>.cjs`) and `npm run typecheck`. The specs are DESIGN documents: amend them in place when the code disagrees, never rewrite them.
 
 ## LEGAL — clean-room rule (read `docs/shared/LEGAL_REFERENCE_ONLY.md`)
 `docs/reference/biz-analyst-*` is third-party decompiled code kept only to understand behaviour. Never copy/translate its code, strings, layouts, images or colours. Write a short behaviour note in `docs/specs/<topic>.md` in your own words, then implement from the note. No legacy names/branding in LazyBooks code or UI. There is no other reference code in this repo; everything else is written fresh from specs.

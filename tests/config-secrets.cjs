@@ -81,4 +81,13 @@ assert.throws(() => sec.setSecret('passphrase', 'x'), /not available/);
 sec.initSecrets(tmp, backend);
 fs.writeFileSync(path.join(tmp, 'secrets.bin'), Buffer.from('garbage-garbage-garbage-garbage-garbage'));
 assert.equal(sec.getSecret('licenseKey'), null);
+// Phase 43: an older config file without the Milestone 9 keys loads with the defaults and is not treated as corrupt
+{
+  const d43 = fs.mkdtempSync(path.join(require('node:os').tmpdir(), 'lb-cfg43-'));
+  const oldCfg = cfg.defaultConfig(); delete oldCfg.voucherBatchSize; delete oldCfg.autoUpdateCheck;
+  fs.writeFileSync(path.join(d43, 'config.json'), JSON.stringify(oldCfg));
+  const c43 = cfg.initConfig(d43);
+  assert.equal(c43.voucherBatchSize, 500); assert.equal(c43.autoUpdateCheck, true);
+  assert.ok(!fs.readdirSync(d43).some((n) => n.includes('corrupt')));
+}
 console.log('config-secrets OK');

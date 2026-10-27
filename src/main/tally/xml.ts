@@ -102,6 +102,13 @@ export interface CollectionSpec extends RequestScope {
   fetch?: string[];
   /** Filters: a formula name plus its expression, e.g. `{name:'LBChanged', formula:'$AlterID > 1200'}`. */
   filters?: Array<{ name: string; formula: string }>;
+  /**
+   * Phase 44: collection variables (`<COMPUTEVAR>name : definition</COMPUTEVAR>`, e.g. a running number). Emitted before the
+   * FILTERS tag, in the given order. Omit for the unchanged request.
+   */
+  computeVars?: Array<{ name: string; formula: string }>;
+  /** Phase 44: per-object computed values (`<COMPUTE>name : formula</COMPUTE>`), emitted after the compute variables, in order. */
+  computeLines?: Array<{ name: string; formula: string }>;
 }
 
 /** Collection export (TALLY_WIRE section 2): TYPE + NATIVEMETHOD fields + FETCH + FILTERS (plural) + SYSTEM formulae. */
@@ -117,6 +124,13 @@ export function buildCollectionRequest(spec: CollectionSpec): string {
     assertName('fetch field', f, /^[A-Za-z_][A-Za-z0-9_.$*]*$/);
     c += `<FETCH>${f}</FETCH>`;
   }
+  for (const [tag, list] of [['COMPUTEVAR', spec.computeVars], ['COMPUTE', spec.computeLines]] as const) {
+    for (const v of list ?? []) {
+      assertName('compute name', v.name, NAME_RE);
+      c += `<${tag}>${v.name} : ${escapeXml(v.formula)}</${tag}>`;
+    }
+  }
+  // filters stay in the given order: Tally applies them one after the other (the paging filter must come after the narrowing ones)
   const filters = spec.filters ?? [];
   if (filters.length > 0) {
     for (const f of filters) assertName('filter name', f.name, NAME_RE);

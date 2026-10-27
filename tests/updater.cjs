@@ -8,9 +8,12 @@ const assert = require('node:assert/strict');
 const { createHash } = require('node:crypto');
 
 const out = fs.mkdtempSync(path.join(os.tmpdir(), 'lb-upd-'));
-const js = ts.transpileModule(fs.readFileSync('src/main/updater.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-fs.writeFileSync(path.join(out, 'updater.js'), js);
-const U = require(path.join(out, 'updater.js'));
+const tr = (f) => ts.transpileModule(fs.readFileSync(f, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+fs.mkdirSync(path.join(out, 'main'), { recursive: true });
+fs.mkdirSync(path.join(out, 'shared'), { recursive: true });
+fs.writeFileSync(path.join(out, 'shared', 'constants.js'), tr('src/shared/constants.ts')); // updater.ts reads UPDATE_CONTROLS (Phase 47)
+fs.writeFileSync(path.join(out, 'main', 'updater.js'), tr('src/main/updater.ts'));
+const U = require(path.join(out, 'main', 'updater.js'));
 let n = 0;
 const ok = (m) => console.log(`ok ${++n} - ${m}`);
 
@@ -124,10 +127,94 @@ const names = (st) => st.calls.map((c) => c[0]);
   dr.setInstallOnQuit(true); assert.equal(au.autoInstallOnAppQuit, true); dr.quitAndInstall(true); assert.deepEqual(au.calls[1], [true, true]);
   ok('electron-updater wrapper: no auto download, no downgrade, no prerelease, generic feed');
 
+  // Phase 47: automatic switch, manual check, gap, progress
+  {
+    const mk = (auto, o = {}, deps = {}) => {
+      const timers = [];
+      const st = { auto, offer: offer(), calls: [], t: 5_000_000, refreshed: 0, refreshFail: false, progressCb: null, ...o };
+      const driver = {
+        setFeed: (u) => st.calls.push(['feed', u]), check: async () => ({ version: '1.2.0' }),
+        download: async () => { st.calls.push(['download']); if (st.progressCb) { st.progressCb(10.4); st.pctAtDownload = st.u.state().progress; st.progressCb(250); } return '/tmp/x/a.exe'; },
+        setInstallOnQuit: (on) => st.calls.push(['onquit', on]), quitAndInstall: (x) => st.calls.push(['install', x]),
+        onProgress: (cb) => { st.progressCb = cb; },
+      };
+      const u = U.createUpdater({
+        currentVersion: '1.1.0', getOffer: () => st.offer, driver, sha256File: async () => HEX, removeFile: async () => {}, log: () => {}, now: () => st.t,
+        getAutoCheck: () => st.auto, refreshOffer: async () => { st.refreshed++; if (st.refreshFail) throw new Error('offline'); },
+        setTimer: (fn, ms) => { timers.push({ fn, ms }); return timers.length; }, clearTimer: () => {}, firstDelayMs: 5, intervalMs: 9, ...deps,
+      });
+      st.u = u;
+      return { st, u, timers };
+    };
+    const tick = () => new Promise((res) => setImmediate(res));
+
+    // switch off: no timer, nothing downloaded on its own
+    let q = mk(false); q.u.start(); assert.equal(q.timers.length, 0); assert.equal(q.u.state().autoCheck, false);
+    q.u.offerChanged(); await tick(); assert.deepEqual(q.st.calls, []); // optional update: not acted on
+    ok('automatic checks off: no timer and an optional update is not downloaded by itself');
+
+    // forced update still acted on when off
+    q = mk(false, { offer: offer({ must_update: true }) }); q.u.start(); q.u.offerChanged(); await tick(); await tick();
+    assert.deepEqual(q.st.calls.at(-1), ['install', true]); assert.ok(q.st.calls.some((c) => c[0] === 'download'));
+    q = mk(false, { offer: offer({ min_supported: '1.1.5', update_available: false }) }); q.u.start(); q.u.offerChanged(); await tick(); await tick();
+    assert.equal(q.u.state().phase, 'ready'); assert.equal(q.u.state().forced, true);
+    ok('automatic checks off: a forced update (must_update or below min_supported) still downloads and installs');
+
+    // switch toggled at run time starts and stops the timer
+    q = mk(true); q.u.start(); assert.equal(q.timers.length, 1); assert.equal(q.timers[0].ms, 5);
+    q.u.setAutoCheck(false); assert.equal(q.u.state().autoCheck, false); q.timers[0].fn(); await tick(); assert.deepEqual(q.st.calls, []);
+    q.u.setAutoCheck(true); assert.equal(q.timers.length, 2); assert.equal(q.u.state().autoCheck, true);
+    ok('switch changed while running: off stops the timer, on starts it again');
+
+    // manual check works when off, refreshes the bootstrap first, sets lastCheckedAt
+    q = mk(false); q.u.start(); let v = await q.u.checkManual();
+    assert.equal(q.st.refreshed, 1); assert.equal(v.phase, 'ready'); assert.equal(v.autoCheck, false); assert.equal(v.lastCheckedAt, new Date(q.st.t).toISOString());
+    ok('manual check works with automatic checks off: bootstrap refreshed first, extended view returned');
+
+    // gap enforced: second press inside 30 s sends nothing; after the gap it runs
+    q = mk(true, { offer: null }); v = await q.u.checkManual(); assert.equal(q.st.refreshed, 1);
+    assert.equal(v.message, 'You have the latest version available to you (1.1.0).'); assert.equal(v.phase, 'idle');
+    q.st.t += 29_000; await q.u.checkManual(); assert.equal(q.st.refreshed, 1);
+    q.st.t += 2_000; await q.u.checkManual(); assert.equal(q.st.refreshed, 2);
+    ok('manual gap: 29 s later nothing is sent, 31 s later it runs; honest "latest available to you" line');
+
+    // refresh failure keeps the cached offer
+    q = mk(true, { refreshFail: true }); v = await q.u.checkManual(); assert.equal(v.phase, 'ready');
+    ok('failed bootstrap refresh: the cached offer is still evaluated');
+
+    // not rolled out yet
+    q = mk(true, { offer: offer({ update_available: false }) }); v = await q.u.checkManual();
+    assert.equal(v.phase, 'idle'); assert.equal(v.message, 'No update available for this device yet.');
+    ok('newer version not rolled out to this device: "No update available for this device yet"');
+
+    // dev run: manual check does nothing
+    const dev = U.createUpdater({ currentVersion: '1.1.0', getOffer: () => offer(), driver: null, log: () => {}, refreshOffer: async () => { throw new Error('must not be called'); } });
+    v = await dev.checkManual(); assert.equal(v.phase, 'unsupported'); assert.match(v.message, /development run/);
+    ok('development run: manual check does nothing and says so');
+
+    // progress passes through while downloading, clamped, cleared afterwards
+    q = mk(true); await q.u.checkNow();
+    assert.deepEqual(q.st.pctAtDownload, { percent: 10 }); assert.equal(q.u.state().progress, null); assert.equal(q.u.state().phase, 'ready');
+    ok('download progress: percent passes through while downloading (rounded), cleared when done');
+
+    // electron-updater wrapper forwards download-progress
+    const au2 = { autoDownload: true, autoInstallOnAppQuit: true, allowDowngrade: true, allowPrerelease: true, setFeedURL() {}, async checkForUpdates() { return null; }, async downloadUpdate() { return ['/p']; }, quitAndInstall() {}, on(ev, fn) { this.ev = ev; this.fn = fn; } };
+    const got = []; U.createElectronUpdaterDriver(au2).onProgress((p) => got.push(p)); au2.fn({ percent: 42 });
+    assert.equal(au2.ev, 'download-progress'); assert.deepEqual(got, [42]);
+    ok('electron-updater wrapper forwards download-progress percent');
+
+    // single flight with manual
+    q = mk(true); const [x, y] = await Promise.all([q.u.checkNow(), q.u.checkManual()]);
+    assert.equal(q.st.calls.filter((c) => c[0] === 'download').length, 1);
+    ok('a manual check during a running check does not download twice');
+  }
+
   // wiring
   const idx = fs.readFileSync('src/main/index.ts', 'utf8');
   assert.match(idx, /createUpdater\(\{/); assert.match(idx, /app\.isPackaged \? createElectronUpdaterDriver/); assert.match(idx, /updater\?\.start\(\)/);
   assert.match(idx, /quitting = true;\s+realDriver\.quitAndInstall/);
+  assert.match(idx, /getAutoCheck: \(\) => getConfig\(\)\.autoUpdateCheck/); assert.match(idx, /updater\?\.setAutoCheck\(on\)/); assert.match(idx, /updater\?\.offerChanged\(\)/);
+  assert.match(idx, /IPC\.updateCheck, \(\) => updater\?\.checkManual\(\)/);
   for (const c of ['updateState', 'updateCheck', 'updateInstall']) { assert.match(idx, new RegExp(`IPC\\.${c}`)); assert.match(fs.readFileSync('src/preload/index.ts', 'utf8'), new RegExp(`IPC\\.${c}`)); }
   assert.ok(!/[\u{1F300}-\u{1FAFF}]/u.test(fs.readFileSync('src/main/updater.ts', 'utf8')));
   ok('wiring: packaged-only driver, real quit before install, three IPC channels in main and preload');

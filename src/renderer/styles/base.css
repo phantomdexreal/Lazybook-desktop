@@ -26,3 +26,19 @@ body {
 .lb-field {
   font-family: inherit;
 }
+
+/* Phase 46: indeterminate progress bar (counting, saving). Reduced motion gets a still, partly filled bar. */
+@keyframes lb-indeterminate-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+.lb-indeterminate {
+  animation: lb-indeterminate-slide 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lb-indeterminate {
+    animation: none !important;
+    transform: none;
+    width: 40%;
+  }
+}

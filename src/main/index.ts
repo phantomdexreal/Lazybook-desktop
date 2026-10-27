@@ -40,6 +40,9 @@ import { createVouchers, type Vouchers } from './tally/vouchers';
 import { createReconciler, type Reconciler } from './tally/reconcile';
 import { createClosing, type Closing } from './tally/closing';
 import { createScheduler, type Scheduler } from './sync/scheduler';
+import { createProgressTracker } from './sync/progress';
+import { overallPercent } from '../shared/syncProgress';
+import type { SyncProgress } from '../shared/ipc';
 import { createRequestListener, type RequestListener } from './postbox/listener';
 import { dataModel, deleteVaultFiles, openVault, type Vault } from './db';
 import { setMeta } from './db/seq';
@@ -130,6 +133,29 @@ const LogQueryInput = z
   })
   .strict();
 const LoginInput = z.object({ email: z.string().min(1).max(254), password: z.string().min(1).max(256) });
+
+/** Phase 46: throttled sync progress goes to the window, the tray tooltip and the taskbar button. Counts only. */
+const PROGRESS_STAGES_SHOWN = new Set(['counting', 'vouchers', 'checking-deleted', 'applying', 'closing']);
+const progressTracker = createProgressTracker({
+  emit: (p: SyncProgress) => {
+    send(IPC.syncProgress, p);
+    refreshTray();
+    if (win && !win.isDestroyed()) {
+      const pct = overallPercent(p);
+      const busy = PROGRESS_STAGES_SHOWN.has(p.stage);
+      if (!busy) win.setProgressBar(-1);
+      else if (p.stage === 'vouchers' && pct !== null && p.vouchers?.total) win.setProgressBar(pct / 100);
+      else win.setProgressBar(2, { mode: 'indeterminate' });
+    }
+  },
+});
+const syncTrayText = (): string | null => {
+  const p = progressTracker.last();
+  if (!p || !PROGRESS_STAGES_SHOWN.has(p.stage)) return null;
+  if (p.stage === 'vouchers' && p.vouchers && p.vouchers.total !== null && p.vouchers.total <= p.vouchers.batchSize) return null; // quiet cycle
+  const pct = overallPercent(p);
+  return p.stage === 'vouchers' && pct !== null ? `syncing ${pct}%` : 'syncing';
+};
 
 function send(channel: string, payload: unknown): void {
   if (win && !win.isDestroyed()) win.webContents.send(channel, payload);
@@ -286,6 +312,7 @@ if (!app.requestSingleInstanceLock()) {
         device?.onActivation(state);
         requestListener?.nudge();
         entryListener?.nudge();
+        updater?.offerChanged(); // Phase 47: with automatic checks off, a forced update is still acted on
       },
     });
     activation.init();
@@ -353,7 +380,7 @@ if (!app.requestSingleInstanceLock()) {
       getVault: () => vault,
       getConfig: () => {
         const c = getConfig();
-        return { intervalMin: c.intervalMin, lookbackDays: c.lookbackDays, paused: c.paused };
+        return { intervalMin: c.intervalMin, lookbackDays: c.lookbackDays, paused: c.paused, voucherBatchSize: c.voucherBatchSize };
       },
       blocked: () => {
         if (diskLevel === 'critical') return 'low disk space';
@@ -368,6 +395,8 @@ if (!app.requestSingleInstanceLock()) {
       },
       masters,
       vouchers,
+      getRunFile: () => join(app.getPath('userData'), 'sync-run.json'),
+      onProgress: (p) => progressTracker.push(p),
       closing,
       reconciler,
       events: lifecycle,
@@ -486,6 +515,7 @@ if (!app.requestSingleInstanceLock()) {
     ipcMain.handle(IPC.themeGet, () => getThemeState());
     ipcMain.handle(IPC.themeSet, (_e, patch: unknown) => setTheme(patch as ThemePatch));
     ipcMain.handle(IPC.statusGet, (): Status => currentStatus());
+    ipcMain.handle(IPC.syncProgressGet, (): SyncProgress | null => progressTracker.last());
     // Phase 35: settings are validated all-or-nothing in settings.ts; the OS login item is the truth for autostart.
     const settings = createSettings({
       config: () => getConfig(),
@@ -503,6 +533,10 @@ if (!app.requestSingleInstanceLock()) {
       },
       onTallyTargetChanged: () => void tally?.detect(),
       onSyncSettingsChanged: () => send(IPC.statusEvent, currentStatus()),
+      onAutoUpdateChanged: (on) => {
+        updater?.setAutoCheck(on);
+        send(IPC.statusEvent, currentStatus());
+      },
       log: (msg, data) => logger.info('ui', msg, data),
     });
     // Phase 36: devices list, revoke and force resync (devices.ts); the vault cursor is forgotten so the next sync is a full one.
@@ -600,6 +634,10 @@ if (!app.requestSingleInstanceLock()) {
     updater = createUpdater({
       currentVersion: app.getVersion(),
       getOffer: () => activation?.getBootstrap()?.update ?? null,
+      getAutoCheck: () => getConfig().autoUpdateCheck,
+      refreshOffer: async () => {
+        await activation?.bootstrapNow();
+      },
       driver: realDriver
         ? {
             ...realDriver,
@@ -613,7 +651,7 @@ if (!app.requestSingleInstanceLock()) {
       log: (level, msg, data) => (level === 'warn' ? logger.warn('app', msg, data) : logger.info('app', msg, data)),
     });
     ipcMain.handle(IPC.updateState, () => updater?.state());
-    ipcMain.handle(IPC.updateCheck, () => updater?.checkNow());
+    ipcMain.handle(IPC.updateCheck, () => updater?.checkManual());
     // Phase 40: embedded PWA. The window shows the PWA export from resources/pwa through a read-only custom protocol and gets only window.LazyHost.
     const pwaDir = app.isPackaged ? join(process.resourcesPath, 'pwa') : join(app.getAppPath(), 'resources', 'pwa');
     const pwaSession = session.fromPartition('persist:lb-pwa');
@@ -635,7 +673,7 @@ if (!app.requestSingleInstanceLock()) {
       writeFile: (p, data) => writeFileAsync(p, data),
       openExternal: (u) => shell.openExternal(u),
       openDataFolder: async () => ({ ok: (await tools.openDataFolder()).ok }),
-      checkForUpdate: async () => (await updater?.checkNow()) ?? { phase: 'unsupported' },
+      checkForUpdate: async () => (await updater?.checkManual()) ?? { phase: 'unsupported' },
       getPassphrase: () => (secretsAvailable() ? getSecret('passphrase') : null),
       log: (msg, data) => logger.info('app', msg, data),
     });
@@ -683,6 +721,7 @@ if (!app.requestSingleInstanceLock()) {
     createTray(showWindow, {
       pwa: { available: () => activation?.getBootstrap()?.features['embedded_pwa_desktop'] === true, open: () => void pwaHost?.open() },
       badge: () => currentStatus().pendingEntries,
+      syncText: syncTrayText,
     });
     const trayTimer = setInterval(refreshTray, 60_000); // flags and the waiting count change without a tray event
     trayTimer.unref();

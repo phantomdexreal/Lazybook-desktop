@@ -124,6 +124,15 @@ Repo root: `lazybooks-desktop/`
 | `src/main/sync/` | Scheduler | Phase 18 (`sync-scheduler`) |
 | `src/main/sync/scheduler.ts` | Sync scheduler (timer, single-flight, backoff, cycle commit) | Phase 18 (`sync-scheduler`) |
 | `src/main/sync/plan.ts` | Pure planners: pull to vault ops | Phase 18 (`sync-scheduler`) |
+| `src/main/sync/progress.ts` | Progress tracker: throttle, rate over 5 batches, ETA rules | Phase 46 (`sync-progress`) |
+| `src/shared/syncProgress.ts` | Pure overall percent and count text shared by main and renderer | Phase 46 (`sync-progress`) |
+| `src/renderer/lib/progressView.ts` | Pure card texts, percent and visibility rules | Phase 46 (`sync-progress`) |
+| `src/renderer/lib/updateView.ts` | Pure status line, Check now gap, banner text and plain-text release notes for the Updates block and the Status banner | Phase 47 (`settings-update-controls`) |
+| `src/renderer/components/SyncProgress.tsx` | Progress card on the Status page | Phase 46 (`sync-progress`) |
+| `tests/sync-progress.cjs` | Node-level check: tracker, view texts, event sequence of a 5k-voucher sync, no names, wiring | Phase 46 (`sync-progress`) |
+| `src/main/sync/stage.ts` | On-disk staging of batched voucher pulls (`_lb_stage`), the `sync-run.json` checkpoint and the resume rules | Phase 45 (`sync-batching`) |
+| `tools/gen-big-company.mjs` | Generates a big mock Tally company (50k, 200k presets) for batching, memory and resume tests | Phase 45 (`sync-batching`) |
+| `tests/sync-batching.cjs` | Node-level check: batched equals single pull, kill and resume, kill before commit, paging ignored, size per run, 50k memory | Phase 45 (`sync-batching`) |
 | `src/main/sync/store.ts` | Read-only vault helpers (stored keys, cursors) | Phase 18 (`sync-scheduler`) |
 | `tests/sync-scheduler.cjs` | Node test: scheduler vs mock Tally and real SQLite vault | Phase 18 (`sync-scheduler`) |
 | `tests/chunker.cjs` | Node test: chunk limits, order, default omission, addressing; equality with the shared initial and delta examples; reference applier run (`NODE_PATH` must reach `typescript`; needs python3) | Phase 20 (`chunker`) |
@@ -150,6 +159,18 @@ Repo root: `lazybooks-desktop/`
 | `src/main/tally/vouchers/map.ts` | Pure mapping of VOUCHER objects to `tx_*` rows, derived columns, `tx_tax_line` | Phase 11 (`tally-vouchers`) |
 | `src/main/tally/vouchers/columns.ts` | GENERATED tag-to-column map of the voucher tables | Phase 11 (`tally-vouchers`) |
 | `tests/tally-vouchers.cjs` | Node-level check: vouchers via the client + mock Tally equal every shared `tx_*` fixture (WIRE-01); incremental, lookback, edge cases | Phase 11 (`tally-vouchers`) |
+| `src/main/tally/vouchers/paging.ts` | Paged voucher read (running-counter filter), window count, paging-ignored detection, adaptive batch size; not called by the scheduler until Phase 45 | Phase 44 (`tally-paging`) |
+| `tests/tally-paging.cjs` | Node-level check: paging against the mock Tally (sizes 1, 7, 500, above total; window, AlterID, resume, ignored paging, timeouts, count) and the golden request test | Phase 44 (`tally-paging`) |
+| `tests/golden-requests.cjs` | Helper: builds every existing Tally request for the golden comparison | Phase 44 (`tally-paging`) |
+| `tests/fixtures/xml/golden_requests.json` | Golden XML of every existing request (masters, vouchers, guid list, company, function) captured before the Phase 44 builder change | Phase 44 (`tally-paging`) |
+| `tests/tally-paging.cjs` | Node-level check: pages cover every voucher once, golden XML unchanged when paging is off, fallback and halving (PLANNED) | Phase 44 (`tally-paging`) |
+| `tools/gen-big-company.mjs` | Generates a mock company with N vouchers (50k, 200k presets) for batching and memory tests (PLANNED) | Phase 45 (`sync-batching`) |
+| `tests/sync-batching.cjs` | Node-level check: batched pull equals the single pull, kill and resume, memory on a generated company (PLANNED) | Phase 45 (`sync-batching`) |
+| `src/main/sync/progress.ts` | Pure sync progress tracker: stages, throttle, rate, ETA (PLANNED) | Phase 46 (`sync-progress`) |
+| `src/renderer/lib/progressView.ts` | Pure texts and percent from a `SyncProgress` (PLANNED) | Phase 46 (`sync-progress`) |
+| `src/renderer/components/SyncProgress.tsx` | Progress bar card used by the Status page (PLANNED) | Phase 46 (`sync-progress`) |
+| `tests/sync-progress.cjs` | Node-level check: tracker, view texts, event sequence on a generated company (PLANNED) | Phase 46 (`sync-progress`) |
+| `docs/specs/voucher-batching.md`, `sync-progress.md`, `update-controls.md`, `tally-real-world-notes.md` | Milestone 9 design notes and real-Tally evidence (written 2026-10-27) | Milestone 9 planning |
 | `src/main/tally/xml.ts` | Tally XML client | Phase 8 (`tally-xml-client`) |
 | `src/main/tray.ts` | Tray, autostart, logging | Phase 2 (`tray-lifecycle`) |
 | `src/main/updater.ts` | Auto-update from GitHub Releases | Phase 39 (`auto-update`) |

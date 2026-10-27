@@ -16,6 +16,7 @@ import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
 import { rm } from 'node:fs/promises';
 
+import { UPDATE_CONTROLS } from '../shared/constants';
 import type { UpdatePhase, UpdateView } from '../shared/ipc';
 
 export type { UpdatePhase, UpdateView };
@@ -40,11 +41,19 @@ export interface UpdaterDriver {
   /** Install when the app quits normally (only switched on after the checksum matched). */
   setInstallOnQuit(on: boolean): void;
   quitAndInstall(silent: boolean): void;
+  /** Phase 47: download percent (0 to 100) while `download()` runs. Optional so older fakes keep working. */
+  onProgress?(listener: (percent: number) => void): void;
 }
 
 export interface UpdaterDeps {
   currentVersion: string;
   getOffer: () => UpdateOffer | null;
+  /** Phase 47: the `autoUpdateCheck` setting (default true). */
+  getAutoCheck?: () => boolean;
+  /** Phase 47: refresh the cached bootstrap before a manual check (the existing bootstrap path, no new endpoint). A failure keeps the cached offer. */
+  refreshOffer?: () => Promise<void>;
+  /** Phase 47: minimum gap between two checks started by the person (default 30 s). */
+  manualGapMs?: number;
   /** null when the app is not packaged (dev run): updating is unsupported there. */
   driver: UpdaterDriver | null;
   sha256File?: (path: string) => Promise<string>;
@@ -64,6 +73,12 @@ export interface Updater {
   state(): UpdateView;
   /** Looks at the cached bootstrap and, when an update is offered, downloads and verifies it. Single flight. */
   checkNow(): Promise<UpdateView>;
+  /** Phase 47: the person's "Check now": refreshes the bootstrap first, enforces the gap, works with automatic checks off. */
+  checkManual(): Promise<UpdateView>;
+  /** Phase 47: the setting changed. On starts the timer, off stops it (forced updates are still acted on, see `offerChanged`). */
+  setAutoCheck(on: boolean): void;
+  /** Phase 47: the cached offer may have changed (after a bootstrap). With automatic checks off only a forced update is acted on. */
+  offerChanged(): void;
   /** Installs a verified update now (quits the app). */
   install(): { ok: true } | { ok: false; code: 'NOT_READY'; message: string };
   start(): void;
@@ -129,6 +144,7 @@ export interface AutoUpdaterLike {
   checkForUpdates(): Promise<{ updateInfo: { version: string } } | null>;
   downloadUpdate(): Promise<string[]>;
   quitAndInstall(isSilent?: boolean, isForceRunAfter?: boolean): void;
+  on(event: 'download-progress', listener: (info: { percent: number }) => void): unknown;
 }
 
 export function createElectronUpdaterDriver(au: AutoUpdaterLike): UpdaterDriver {
@@ -152,6 +168,9 @@ export function createElectronUpdaterDriver(au: AutoUpdaterLike): UpdaterDriver 
       au.autoInstallOnAppQuit = on;
     },
     quitAndInstall: (silent) => au.quitAndInstall(silent, true),
+    onProgress: (listener) => {
+      au.on('download-progress', (info) => listener(info.percent));
+    },
   };
 }
 
@@ -167,7 +186,9 @@ export function createUpdater(d: UpdaterDeps): Updater {
   const clearTimer = d.clearTimer ?? ((h: unknown) => clearTimeout(h as ReturnType<typeof setTimeout>));
   const retryMs = d.retryAfterFailureMs ?? 6 * 60 * 60 * 1000;
 
-  let view: UpdateView = { phase: d.driver ? 'idle' : 'unsupported', version: null, forced: false, notes: null, message: d.driver ? null : 'Updates install only from the installed app.' };
+  let view: UpdateView = { phase: d.driver ? 'idle' : 'unsupported', version: null, forced: false, notes: null, message: d.driver ? null : 'Updates are not available in a development run.', currentVersion: d.currentVersion, autoCheck: d.getAutoCheck ? d.getAutoCheck() : UPDATE_CONTROLS.autoUpdateCheckDefault, lastCheckedAt: null, progress: null };
+  const gapMs = d.manualGapMs ?? UPDATE_CONTROLS.manualUpdateCheckMinGapS * 1000;
+  let lastCheckedMs: number | null = null;
   let verified: string | null = null; // version whose installer matched the checksum
   let failed: { version: string; until: number } | null = null;
   let running: Promise<UpdateView> | null = null;
@@ -176,33 +197,43 @@ export function createUpdater(d: UpdaterDeps): Updater {
 
   const set = (v: Partial<UpdateView>): void => {
     view = { ...view, ...v };
+    // progress only exists while downloading
+    if (v.phase !== undefined) view = { ...view, progress: v.phase === 'downloading' ? (v.progress ?? { percent: 0 }) : null };
   };
-  const idle = (): UpdateView => {
-    if (view.phase !== 'unsupported') set({ phase: 'idle', version: null, forced: false, notes: null, message: null });
+  const latestText = (): string => `You have the latest version available to you (${d.currentVersion}).`;
+  const idle = (message: string | null = null): UpdateView => {
+    if (view.phase !== 'unsupported') set({ phase: 'idle', version: null, forced: false, notes: null, message });
     return view;
   };
+  d.driver?.onProgress?.((percent) => {
+    if (view.phase !== 'downloading') return;
+    const p = Number.isFinite(percent) ? Math.max(0, Math.min(100, Math.round(percent))) : 0;
+    view = { ...view, progress: { percent: p } };
+  });
   const fail = (version: string, forced: boolean, notes: string | null, message: string, code: string, extra?: Record<string, unknown>): UpdateView => {
     set({ phase: 'error', version, forced, notes, message });
     d.log('warn', 'update failed', { code, version, ...extra });
     return view;
   };
 
-  async function run(): Promise<UpdateView> {
+  async function run(forcedOnly = false): Promise<UpdateView> {
     if (!d.driver) return view;
     const o = d.getOffer();
-    if (!o) return idle();
+    if (!o) return forcedOnly ? view : idle(latestText());
 
     const newer = compareVersions(o.latest, d.currentVersion);
     if (newer === null) {
       d.log('warn', 'update offer ignored: not x.y.z', { latest: o.latest });
-      return idle();
+      return forcedOnly ? view : idle(latestText());
     }
-    if (newer <= 0) return idle(); // nothing newer than what runs (also covers a stale flag)
+    if (newer <= 0) return forcedOnly ? view : idle(latestText()); // nothing newer than what runs (also covers a stale flag)
 
     const belowMin = o.min_supported ? (compareVersions(d.currentVersion, o.min_supported) ?? 0) < 0 : false;
     const forced = o.must_update === true || belowMin;
+    // Automatic checks off: only a forced update is acted on (the blocking screen needs a way forward).
+    if (forcedOnly && !forced) return view;
     // Staged rollout is decided by the server: a device outside its bucket gets update_available=false.
-    if (!o.update_available && !forced) return idle();
+    if (!o.update_available && !forced) return idle('No update available for this device yet.');
 
     const notes = o.notes ?? null;
     if (verified === o.latest) {
@@ -245,13 +276,64 @@ export function createUpdater(d: UpdaterDeps): Updater {
     return view;
   }
 
+  const go = (forcedOnly: boolean): Promise<UpdateView> => {
+    running ??= run(forcedOnly)
+      .then((v) => {
+        if (!forcedOnly && d.driver) {
+          lastCheckedMs = now();
+          set({ lastCheckedAt: new Date(lastCheckedMs).toISOString() });
+          return view;
+        }
+        return v;
+      })
+      .finally(() => {
+        running = null;
+      });
+    return running;
+  };
+  const autoOn = (): boolean => view.autoCheck;
+  const schedule = (ms: number): void => {
+    timer = setTimer(() => {
+      if (stopped || !autoOn()) return;
+      void self.checkNow().finally(() => {
+        if (!stopped && autoOn()) schedule(d.intervalMs ?? 30 * 60 * 1000);
+      });
+    }, ms);
+  };
+
   const self: Updater = {
     state: () => view,
     checkNow() {
-      running ??= run().finally(() => {
-        running = null;
-      });
-      return running;
+      return go(false);
+    },
+    async checkManual() {
+      if (!d.driver) return view;
+      const fresh = (): boolean => lastCheckedMs !== null && now() - lastCheckedMs < gapMs;
+      if (fresh()) return view; // inside the gap: show the last result, send nothing
+      if (running) {
+        await running.catch(() => undefined);
+        if (fresh()) return view;
+      }
+      if (d.refreshOffer) {
+        try {
+          await d.refreshOffer();
+        } catch (e) {
+          d.log('warn', 'update check: bootstrap refresh failed, using the last known offer', { err: (e as Error).message });
+        }
+      }
+      return go(false);
+    },
+    setAutoCheck(on) {
+      if (view.autoCheck === on) return;
+      set({ autoCheck: on });
+      if (stopped) return;
+      if (timer !== null) clearTimer(timer);
+      timer = null;
+      if (on) schedule(d.firstDelayMs ?? 60_000);
+    },
+    offerChanged() {
+      if (stopped || autoOn() || !d.driver) return;
+      void go(true);
     },
     install() {
       if (!d.driver || view.phase !== 'ready' || verified === null || verified !== view.version) {
@@ -264,15 +346,9 @@ export function createUpdater(d: UpdaterDeps): Updater {
     start() {
       if (!stopped) return;
       stopped = false;
-      const tick = (ms: number): void => {
-        timer = setTimer(() => {
-          if (stopped) return;
-          void self.checkNow().finally(() => {
-            if (!stopped) tick(d.intervalMs ?? 30 * 60 * 1000);
-          });
-        }, ms);
-      };
-      tick(d.firstDelayMs ?? 60_000);
+      if (d.getAutoCheck) set({ autoCheck: d.getAutoCheck() });
+      if (autoOn()) schedule(d.firstDelayMs ?? 60_000);
+      else d.log('info', 'automatic update checks are off');
     },
     stop() {
       stopped = true;

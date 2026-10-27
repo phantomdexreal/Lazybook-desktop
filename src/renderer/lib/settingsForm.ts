@@ -5,6 +5,7 @@ Introduced by: Phase 35 (ui-settings)
 STATUS: IMPLEMENTED (Phase 35)
 */
 
+import { VOUCHER_BATCH } from '../../shared/constants';
 import type { SettingsPatch, SettingsView } from '../../shared/ipc';
 
 /** The form keeps numbers as text so a half-typed value does not jump around. */
@@ -73,4 +74,36 @@ export function fyText(fy: SettingsView['fy']): string {
     return `${m[3]} ${mon} ${m[1]}`;
   };
   return `${f(fy.from)} to ${f(fy.to)}`;
+}
+
+/** Phase 47: presets offered next to the vouchers-per-batch input. */
+export const BATCH_PRESETS: readonly number[] = [100, 250, 500, 1000];
+
+/** First problem with the typed batch size, in plain words; null when it can be saved. */
+export function batchSizeError(text: string, s: SettingsView): string | null {
+  const { min, max } = s.limits.voucherBatchSize;
+  const t = text.trim();
+  if (!INT_RE.test(t) || Number(t) < min || Number(t) > max) return `Enter a whole number of vouchers from ${min} to ${max}.`;
+  return null;
+}
+
+/** Empty patch when the typed value equals the stored one. Call after `batchSizeError` returned null. */
+export function batchSizePatch(text: string, s: SettingsView): SettingsPatch {
+  const n = Number(text.trim());
+  return n !== s.voucherBatchSize ? { voucherBatchSize: n } : {};
+}
+
+/** The value the "Reset to default" button puts back (the default is a constant, never typed twice). */
+export function batchSizeDefaultText(): string {
+  return String(VOUCHER_BATCH.sizeDefault);
+}
+
+/** Plain help text for the setting; mentions the default and that a change applies from the next sync. */
+export function batchSizeHelp(s: SettingsView): string {
+  return `Lower this if Tally freezes or times out. Higher is faster for small companies. This is how many vouchers LazyBooks asks Tally for at a time (${s.limits.voucherBatchSize.min} to ${s.limits.voucherBatchSize.max}); the default is ${VOUCHER_BATCH.sizeDefault}. A change applies from the next sync.`;
+}
+
+/** Patch for the automatic update switch (saved at once, not with the form). */
+export function autoUpdatePatch(on: boolean): SettingsPatch {
+  return { autoUpdateCheck: on };
 }

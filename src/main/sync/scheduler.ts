@@ -6,6 +6,9 @@ STATUS: IMPLEMENTED (Phase 18)
 No Electron import: everything it touches is injected (readers, vault, clock, timers, events), so it is testable from Node.
 One cycle = read the company record (one cheap Tally call), decide with `assessCompany` what is needed, pull only that, then commit the whole result
 to the vault in ONE transaction (one change seq). Cursors move only after that commit. Uploads (postbox) are out of scope.
+Phase 45: vouchers are read in batches (`voucherBatchSize` per request). Each batch is staged on disk (`stage.ts`, outside the live tables) and a checkpoint
+`sync-run.json` is written after it; the final transaction streams the staged vouchers through the upsert layer in chunks, so memory stays near one batch
+and the live vault is untouched until then. A crash resumes from the checkpoint (or restarts); devices never see a half-applied pull.
 */
 
 import type { EventEmitter } from 'node:events';
@@ -22,6 +25,10 @@ import { applyRenames, deletedCheckDue, detectRenames, type ChangeOp } from '../
 import { applyClosing, closingDue, type Closing } from '../tally/closing';
 import { assessCompany, checkCount, createTallyHealth, memoryAfterSync, type Assessment, type GuardAction, type SyncMemory, type TallyState } from '../tally/guards';
 import { createStore, type Store } from './store';
+import { VOUCHER_BATCH } from '../../shared/constants';
+import type { SyncProgress, SyncStage } from '../../shared/ipc';
+import { companyKeyOf, createStage, deleteCheckpoint, readCheckpoint, resumeBlocker, writeCheckpoint, type RunCheckpoint, type Stage } from './stage';
+import { randomUUID } from 'node:crypto';
 import { planMasters, planVouchers } from './plan';
 
 export type SyncReason = 'startup' | 'timer' | 'manual' | 'resume' | 'unpaused';
@@ -55,6 +62,8 @@ export interface SchedulerConfig {
   intervalMin: number;
   lookbackDays: number;
   paused: boolean;
+  /** Vouchers per Tally request; read at the start of every run (Phase 45). Default `VOUCHER_BATCH.sizeDefault`. */
+  voucherBatchSize?: number;
 }
 
 export interface SchedulerDeps {
@@ -65,7 +74,13 @@ export interface SchedulerDeps {
   /** Read the selected company from Tally (throws a TallyError or Error('No company selected')). */
   readCompany: () => Promise<CompanyRecord>;
   masters: Pick<Masters, 'pull' | 'last'>;
-  vouchers: Pick<Vouchers, 'pull'>;
+  vouchers: Pick<Vouchers, 'pullBatched'>;
+  /** Where the resume checkpoint lives (userData `sync-run.json`). Null or omitted: no checkpoint file, a stopped run restarts. */
+  getRunFile?: () => string | null;
+  /** Progress hook (counts only, no names). Phase 46 puts a throttling tracker and the IPC push behind it. */
+  onProgress?: (p: SyncProgress) => void;
+  /** Vouchers per chunk when the staged vouchers are committed (default 500). */
+  commitChunk?: number;
   closing: Pick<Closing, 'read'>;
   reconciler: Pick<Reconciler, 'checkDeleted'>;
   /** The lifecycle emitter: 'sync-now', 'pause-changed' (boolean), 'resume'. */
@@ -121,6 +136,8 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
   let nextRunAt: number | null = null;
   let layerFor: Vault | null = null;
   let layer: UpsertLayer | null = null;
+  let stageFor: Vault | null = null;
+  let stage: Stage | null = null;
   let storeFor: Vault | null = null;
   let store: Store | null = null;
   let lastOutcome: SyncOutcome | null = null;
@@ -128,6 +145,12 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
   let message: string | null = null;
   let lastSyncMem: string | null = null;
   const listeners: Array<[string, (...a: never[]) => void]> = [];
+  /** Progress identity of the cycle running now (counts only, never names). */
+  let curRun: { runId: string; startedAt: string; resumed: boolean; note: string | null } | null = null;
+  const progress = (stage: SyncStage, extra: Partial<SyncProgress> = {}): void => {
+    if (!deps.onProgress || !curRun) return;
+    deps.onProgress({ runId: curRun.runId, stage, startedAt: curRun.startedAt, updatedAt: new Date(now()).toISOString(), ratePerMin: null, etaSeconds: null, resumed: curRun.resumed, message: curRun.note, ...extra });
+  };
 
   const layerOf = (v: Vault): UpsertLayer => {
     if (layerFor !== v || !layer) {
@@ -135,6 +158,13 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
       layerFor = v;
     }
     return layer;
+  };
+  const stageOf = (v: Vault): Stage => {
+    if (stageFor !== v || !stage) {
+      stage = createStage(v.db);
+      stageFor = v;
+    }
+    return stage;
   };
   const storeOf = (v: Vault): Store => {
     if (storeFor !== v || !store) {
@@ -232,6 +262,8 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
     const up = layerOf(vault);
     const st = storeOf(vault);
     logger.info('sync', 'sync cycle start', { reason });
+    curRun = { runId: randomUUID(), startedAt: new Date(now()).toISOString(), resumed: false, note: null };
+    progress('starting');
 
     // 1. one cheap Tally call decides everything
     const company = await deps.readCompany();
@@ -243,6 +275,7 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
     const win = windowOf(company);
 
     // 2. pull (nothing is written yet)
+    if (needMasters) progress('masters', { masters: { done: 0, total: 1 } });
     let masterOps: VaultOp[] = [];
     let renameOps: VaultOp[] = [];
     if (needMasters) {
@@ -261,23 +294,95 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
         logger.info('sync', 'masters renamed', { renamed: renames.length, vouchersAffected: fix.affectedVouchers.length });
       }
     }
-    let voucherOps: VaultOp[] = [];
     let maxVoucherAlter = 0;
     let deleteOps: VaultOp[] = [];
     let checkedDeleted = false;
+    let voucherOps: Iterable<VaultOp> = [];
+    const runFile = deps.getRunFile?.() ?? null;
+    const stg = stageOf(vault);
     if (assess.pullVouchers !== 'none') {
       const cursor = assess.pullVouchers === 'incremental' && !assess.clearVault ? st.maxVoucherAlterId(cg) : 0;
       const incremental = assess.pullVouchers === 'incremental' && cursor > 0;
-      const v = await deps.vouchers.pull({ from: win.from, to: win.to, sinceAlterId: incremental ? cursor : null, lookbackDays: incremental ? cfg.lookbackDays : 0, today: isoToday(now()) });
-      out.pulled.vouchers = v.guids.length;
-      maxVoucherAlter = v.maxAlterId;
-      voucherOps = planVouchers(dataModel, cg, v.tables as Record<string, Array<Record<string, unknown>>>, st);
+      const size = cfg.voucherBatchSize ?? VOUCHER_BATCH.sizeDefault; // read now: a change applies to the next run only
+      const plan = incremental ? 'incremental' : 'full';
+      const alterVoucher = Number((company as unknown as { alter_id_voucher?: number }).alter_id_voucher ?? 0);
+      const ckKey = companyKeyOf(cg);
+      // resume rules (voucher-batching.md section 6): the checkpoint must still describe this company, window, cursor and Tally state
+      let resume: RunCheckpoint | null = null;
+      const prior = runFile ? readCheckpoint(runFile) : null;
+      if (prior) {
+        const why = resumeBlocker(prior, { plan, windowFrom: win.from, windowTo: win.to, cursorBefore: incremental ? cursor : 0, companyKey: ckKey, alterVoucher, now: now(), stageRun: stg.runId() });
+        if (why === null) resume = prior;
+        else logger.info('sync', 'sync checkpoint discarded', { why });
+      }
+      if (!resume) {
+        if (runFile) deleteCheckpoint(runFile);
+        stg.begin(randomUUID());
+      }
+      const cp: RunCheckpoint = resume ?? {
+        runId: stg.runId() as string, startedAt: new Date(now()).toISOString(), plan, windowFrom: win.from, windowTo: win.to, windows: [], monthIndex: 0, nextStart: 0,
+        size, total: null, doneCount: 0, cursorBefore: incremental ? cursor : 0, companyKey: ckKey, alterVoucher,
+      };
+      if (curRun) {
+        curRun.resumed = resume !== null;
+        if (resume) curRun.note = `Resuming from ${cp.doneCount.toLocaleString('en-US')}`;
+      }
+      if (resume) logger.info('sync', 'sync resumes from checkpoint', { windowIndex: cp.monthIndex, windows: cp.windows.length, nextStart: cp.nextStart, done: cp.doneCount });
+      const save = (): void => {
+        if (runFile) writeCheckpoint(runFile, cp);
+      };
+      const vp = (done: number, index: number, eff: number, wf: string = win.from, wt: string = win.to): Partial<SyncProgress> => ({
+        vouchers: { done, total: cp.total, batchIndex: index, batchCount: cp.total === null ? null : Math.max(1, Math.ceil(cp.total / cp.size)), windowFrom: wf, windowTo: wt, batchSize: cp.size, effectiveSize: eff },
+      });
+      progress('counting');
+      let batches = 0;
+      const res = await deps.vouchers.pullBatched({
+        from: win.from, to: win.to, sinceAlterId: incremental ? cursor : null, lookbackDays: incremental ? cfg.lookbackDays : 0, today: isoToday(now()),
+        size: cp.size,
+        resume: resume ? { windows: cp.windows, windowIndex: cp.monthIndex, nextStart: cp.nextStart, done: cp.doneCount, total: cp.total } : undefined,
+        onStart: ({ windows, total }) => {
+          if (!resume) {
+            cp.windows = windows;
+            cp.total = total;
+            save();
+          }
+          progress('vouchers', vp(cp.doneCount, 0, cp.size));
+        },
+        onBatch: (tables, info) => {
+          stg.put(tables as never); // staged first, checkpoint second: a kill in between re-reads this page and replaces the same vouchers
+          cp.monthIndex = info.windowIndex;
+          cp.nextStart = info.nextStart;
+          cp.doneCount = info.done;
+          save();
+          batches += 1;
+          progress('vouchers', vp(info.done, batches, info.effectiveSize, info.windowFrom, info.windowTo));
+        },
+        onWindowDone: (info) => {
+          cp.monthIndex = info.windowIndex + 1;
+          cp.nextStart = 0;
+          cp.doneCount = info.done;
+          save();
+        },
+      });
+      if (res.pagingIgnored) logger.warn('sync', 'this Tally does not support batching; read month by month');
+      const staged = stg.count();
+      out.pulled.vouchers = staged;
+      const chunk = deps.commitChunk ?? 500;
+      voucherOps = (function* (): Generator<VaultOp> {
+        for (const t of stg.chunks(chunk)) yield* planVouchers(dataModel, cg, t as Record<string, Array<Record<string, unknown>>>, st);
+      })();
       if (!incremental) {
         // a full window pull must equal Tally's own guid list for the window, otherwise the cursor must not advance (guards.checkCount);
         // the same answer yields the vouchers Tally no longer has
+        progress('checking-deleted');
         const chk = await deps.reconciler.checkDeleted({ from: win.from, to: win.to, stored: assess.clearVault ? [] : st.vouchers(cg), allowEmpty: true });
-        const c = checkCount(chk.tallyCount, v.guids.length);
-        if (!c.complete) throw new SyncIncomplete(`Tally listed ${chk.tallyCount} vouchers for the window but ${v.guids.length} were read`);
+        const c = checkCount(chk.tallyCount, staged);
+        if (!c.complete) {
+          // retrying a resume would only reproduce the same short read: start over next time
+          stg.clear();
+          if (runFile) deleteCheckpoint(runFile);
+          throw new SyncIncomplete(`Tally listed ${chk.tallyCount} vouchers for the window but ${staged} were read`);
+        }
         deleteOps = chk.ops as VaultOp[];
         checkedDeleted = true;
         out.deletedVouchers = chk.deleted.length;
@@ -286,6 +391,7 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
     if (!checkedDeleted && vault) {
       const last = metaNum(vault, 'sched.deleted_at');
       if (deletedCheckDue({ lastCheckedAt: last, now: now(), manual })) {
+        progress('checking-deleted');
         const chk = await deps.reconciler.checkDeleted({ from: win.from, to: win.to, stored: st.vouchers(cg) });
         deleteOps = (chk.ops as ChangeOp[]) as VaultOp[];
         checkedDeleted = true;
@@ -298,18 +404,28 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
       setMeta(vault.db, 'sched.memory', 'null');
       up.clearVault();
     }
-    const ops: VaultOp[] = [...masterOps, ...renameOps, ...voucherOps, ...deleteOps];
-    if (ops.length > 0) {
-      const r = up.applyOps(ops);
-      out.written = { inserted: r.inserted, updated: r.updated, deleted: r.deleted, seq: r.seq };
-    }
+    progress('applying');
+    const all = (function* (): Generator<VaultOp> {
+      yield* masterOps;
+      yield* renameOps;
+      yield* voucherOps; // streamed from the stage in chunks: nothing of the whole company is held in memory
+      yield* deleteOps;
+    })();
+    const r = up.applyOps(all);
+    if (r.seq !== null || r.inserted + r.updated + r.deleted > 0) out.written = { inserted: r.inserted, updated: r.updated, deleted: r.deleted, seq: r.seq };
     void maxVoucherAlter; // the cursor is the highest stored alter_id, derived from the committed rows
     setMeta(vault.db, 'sched.memory', JSON.stringify(memoryAfterSync(company)));
+    if (assess.pullVouchers !== 'none') {
+      // the pull is committed: the checkpoint first (a kill after this point must not resume a finished run), then the stage
+      if (runFile) deleteCheckpoint(runFile);
+      stg.clear();
+    }
     if (checkedDeleted) setMeta(vault.db, 'sched.deleted_at', String(now()));
 
     // 4. closing balances: daily, and after any sync that changed vouchers. A failure here never fails the cycle.
     const changedVouchers = out.written.seq !== null && (out.pulled.vouchers > 0 || out.deletedVouchers > 0);
     if (closingDue({ lastRefreshedAt: metaNum(vault, 'sched.closing_at'), now: now(), syncChangedVouchers: changedVouchers })) {
+      progress('closing');
       try {
         const reading = await deps.closing.read();
         const stored = {
@@ -334,6 +450,8 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
     const stamp = new Date(now()).toISOString();
     setMeta(vault.db, 'sched.last_sync_at', stamp);
     lastSyncMem = stamp;
+    progress('done');
+    curRun = null;
     return finish({ ok: true });
   }
 
@@ -370,6 +488,8 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
           nextDelay = f.waitMs;
           why = 'backoff';
         }
+        progress('failed', { message: message ?? f.message });
+        curRun = null;
         logger.warn('sync', 'sync cycle failed', { reason, state, retryable: f.retryable, failures: health.snapshot().failures, nextInMs: nextDelay, code: raw.code ?? null });
       }
       lastOutcome = outcome;

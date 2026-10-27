@@ -6,7 +6,7 @@ STATUS: IMPLEMENTED (Phase 1)
 */
 
 import { contextBridge, ipcRenderer } from 'electron';
-import { IPC, type ActivationResult, type ActivationState, type CryptoSetupResultView, type CryptoStatusView, type DeviceActionResult, type DevicesListResult, type LbApi, type LogQuery, type LogsExportResult, type LogsTailResult, type PairingView, type SettingsPatch, type SettingsResult, type SettingsView, type Status, type ToolResultView, type UpdateView, type TallyDetectionView, type ThemePatch, type ThemeState } from '../shared/ipc';
+import { IPC, type ActivationResult, type ActivationState, type CryptoSetupResultView, type CryptoStatusView, type DeviceActionResult, type DevicesListResult, type LbApi, type LogQuery, type LogsExportResult, type LogsTailResult, type PairingView, type SettingsPatch, type SettingsResult, type SettingsView, type Status, type SyncProgress, type ToolResultView, type UpdateView, type TallyDetectionView, type ThemePatch, type ThemeState } from '../shared/ipc';
 
 const api: LbApi = {
   status: {
@@ -44,6 +44,14 @@ const api: LbApi = {
   },
   pwa: {
     open: () => ipcRenderer.invoke(IPC.pwaOpen) as ReturnType<LbApi['pwa']['open']>,
+  },
+  sync: {
+    onProgress: (listener) => {
+      const handler = (_e: Electron.IpcRendererEvent, p: SyncProgress) => listener(p);
+      ipcRenderer.on(IPC.syncProgress, handler);
+      return () => ipcRenderer.removeListener(IPC.syncProgress, handler);
+    },
+    current: () => ipcRenderer.invoke(IPC.syncProgressGet) as Promise<SyncProgress | null>,
   },
   update: {
     state: () => ipcRenderer.invoke(IPC.updateState) as Promise<UpdateView>,

@@ -25,6 +25,8 @@ SQLite vault per `docs/shared/DATA_MODEL.md` (columns, types and indexes are fix
 ## Tally facts (from the legacy reference — verify on a real Tally)
 XML over HTTP on port 9000; requests: Export Data, Collections with `<FETCH>`, Functions (`$$LicenseInfo`, `$$ProdInfo`), Import Data envelopes; incremental by AlterID; deleted vouchers are not announced (daily reconciliation); renames require fixing references; Tally may block while a user works — serialise calls and back off.
 
+Real-run facts (2026-10-27, details in `docs/specs/tally-real-world-notes.md`): TallyPrime has no `Employee` object type (employees are cost centres; asking for it raises a blocking dialog); Tally keeps working on a request after the client gives up, so never repeat a timed-out heavy request in place; one huge voucher request per year is not survivable on a big company, so vouchers are read in bounded pieces (months today, record-count batches in Milestone 9).
+
 ## Security
 `docs/shared/SECURITY.md`; Electron hardening; secrets via `safeStorage`.
 
@@ -38,6 +40,7 @@ XML over HTTP on port 9000; requests: Export Data, Collections with `<FETCH>`, F
 * **MILESTONE 6 — Cloud Copy (flag `cloud_copy`)** — Phases 31–32: Exit: optional encrypted snapshots in the license project's Storage let new installs bootstrap while the PC is off.
 * **MILESTONE 7 — Connector UI** — Phases 33–37: Exit: a non-technical user can run and understand the connector.
 * **MILESTONE 8 — Packaging, Updates, Optional Embedded PWA** — Phases 38–42: Exit: installer built in CI, auto-updates from GitHub Releases, optional PC UI via embedded PWA.
+* **MILESTONE 9 — Large-Company Reliability & Controls** — Phases 43–48 (planned 2026-10-27): Exit: 100k+ voucher companies sync without Tally freezing or the app closing, vouchers are read in user-sized batches (setting), the Status page shows a progress bar with totals, and automatic update checks have an on/off switch. The current Tally extraction is kept; batching is added around it. See `docs/specs/voucher-batching.md`, `sync-progress.md`, `update-controls.md`, `tally-real-world-notes.md`.
 
 ## Cross-repo dependencies
 See `docs/shared/BUILD_ORDER.md` and each phase's `Depends on` line.

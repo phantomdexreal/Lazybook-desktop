@@ -8,13 +8,27 @@ Storing the result is Phase 15/16 (vault); scheduling is Phase 18. This module o
 */
 
 import { logger } from '../../logger';
-import type { TallyClient } from '../client';
+import { TallyError, type TallyClient } from '../client';
 import type { Row } from '../xml';
 import { MASTER_TABLES } from './columns';
 import { mapMasters, type MasterTables } from './map';
 
 export { mapMasters, canon, type MasterTables, type TableRow } from './map';
 export { MASTER_TABLES } from './columns';
+
+/**
+ * Requests that are never sent to Tally. TallyPrime has no object type named Employee: employees are Cost Centre objects
+ * (the proven LazyBooks predecessor models Employee as a CostCentre variant and never pulled it), so asking for TYPE Employee
+ * makes Tally show a blocking "Internal Error ... Incorrect Object Type!" dialog and stall the XML server until someone clicks OK.
+ * tm_employee therefore stays empty until a Cost-Centre based pull is built and verified against a live Tally.
+ */
+const NOT_SENT_REQUESTS = new Set(['LBEmployees']);
+
+/**
+ * Masters that exist only when the company uses the feature (TaxUnit needs a registered tax unit).
+ * When TallyPrime refuses one of these cleanly, it is skipped with a warning and read as empty instead of aborting the whole pull.
+ */
+const OPTIONAL_REQUESTS = new Set(['LBTaxUnits']);
 
 export interface MasterRequest {
   /** Request id and collection name (`LBLedgers`). */
@@ -105,9 +119,19 @@ export function createMasters(deps: MastersDeps): Masters {
       const started = Date.now();
       const rows: Record<string, Row[]> = {};
       for (const req of requests) {
-        // one request at a time; a failure aborts the pull so a half-read master set is never returned
-        const all = await deps.client.collection(req.id, req.fields, { type: req.type, fetch: req.fetch, company });
-        rows[req.id] = all.filter((r) => typeof r['@NAME'] === 'string');
+        // one request at a time; a failure aborts the pull so a half-read master set is never returned (optional masters excepted)
+        if (NOT_SENT_REQUESTS.has(req.id)) {
+          logger.info('tally', 'master not requested: no such Tally object type', { id: req.id, type: req.type });
+          continue;
+        }
+        try {
+          const all = await deps.client.collection(req.id, req.fields, { type: req.type, fetch: req.fetch, company });
+          rows[req.id] = all.filter((r) => typeof r['@NAME'] === 'string');
+        } catch (e) {
+          const skippable = e instanceof TallyError && (e.detail === 'TALLY_REJECTED' || e.detail === 'TALLY_MALFORMED');
+          if (!OPTIONAL_REQUESTS.has(req.id) || !skippable) throw e;
+          logger.warn('tally', 'optional master skipped', { id: req.id, type: req.type });
+        }
       }
       const asOf = deps.getAsOf?.() ?? isoToday();
       const tables = mapMasters({ rows, companyGuid, asOf });

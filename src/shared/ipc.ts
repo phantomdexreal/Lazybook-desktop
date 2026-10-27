@@ -33,6 +33,10 @@ export const IPC = {
   updateState: 'lb:update:state',
   updateCheck: 'lb:update:check',
   updateInstall: 'lb:update:install',
+  /** Main to renderer push (Phase 43 contract, Phase 46 emits): sync progress, see `SyncProgress`. */
+  syncProgress: 'lb:sync:progress',
+  /** R to M: the last pushed progress event (a page opened mid-run needs it; the renderer never polls). */
+  syncProgressGet: 'lb:sync:progress:get',
   hostCall: 'lb:host:call',
   pwaOpen: 'lb:pwa:open',
   devicesList: 'lb:devices:list',
@@ -230,6 +234,44 @@ export interface UpdateView {
   forced: boolean;
   notes: string | null;
   message: string | null;
+  /** The running app's version (x.y.z). */
+  currentVersion: string;
+  /** The `autoUpdateCheck` setting as the updater sees it. */
+  autoCheck: boolean;
+  /** ISO time of the last finished check (timer or manual); null before the first one. */
+  lastCheckedAt: string | null;
+  /** Download progress while `phase` is `downloading`, else null. */
+  progress: { percent: number } | null;
+}
+
+export type SyncStage = 'idle' | 'starting' | 'masters' | 'counting' | 'vouchers' | 'applying' | 'closing' | 'checking-deleted' | 'done' | 'failed';
+
+/** Phase 43 contract for `lb:sync:progress` (docs/specs/sync-progress.md). Counts and ISO dates only: never a company, ledger or party name. */
+export interface SyncProgress {
+  runId: string;
+  stage: SyncStage;
+  /** Requests finished of requests planned. */
+  masters?: { done: number; total: number };
+  vouchers?: {
+    done: number;
+    /** null until counting ends */
+    total: number | null;
+    batchIndex: number;
+    batchCount: number | null;
+    windowFrom: string;
+    windowTo: string;
+    batchSize: number;
+    /** Lower than `batchSize` after an adaptive backoff. */
+    effectiveSize: number;
+  };
+  startedAt: string;
+  updatedAt: string;
+  ratePerMin: number | null;
+  etaSeconds: number | null;
+  /** true when continuing from a checkpoint */
+  resumed: boolean;
+  /** Plain language, also used for failures. */
+  message: string | null;
 }
 
 export type ToolResultView =
@@ -284,7 +326,11 @@ export interface SettingsView {
   cloudCopyAllowed: boolean;
   language: SettingsLanguage;
   languages: Array<{ id: SettingsLanguage; label: string }>;
-  limits: { intervalMin: { min: number; max: number }; lookbackDays: { min: number; max: number } };
+  /** Vouchers per Tally request (Phase 43). A change applies from the next sync run. */
+  voucherBatchSize: number;
+  /** Look for updates by itself (Phase 43). */
+  autoUpdateCheck: boolean;
+  limits: { intervalMin: { min: number; max: number }; lookbackDays: { min: number; max: number }; voucherBatchSize: { min: number; max: number } };
 }
 
 export interface SettingsPatch {
@@ -295,6 +341,8 @@ export interface SettingsPatch {
   autostart?: boolean;
   cloudCopy?: boolean;
   language?: SettingsLanguage;
+  voucherBatchSize?: number;
+  autoUpdateCheck?: boolean;
 }
 
 export type SettingsResult =
@@ -345,6 +393,12 @@ export interface LbApi {
   pwa: {
     /** Open the embedded app window (needs the license flag embedded_pwa_desktop). */
     open(): Promise<{ ok: true } | { ok: false; code: 'NOT_ENABLED' | 'NO_PWA' | 'FAILED'; message: string }>;
+  };
+  sync: {
+    /** Subscribe to progress pushes (at most one per second plus stage changes). Returns the unsubscribe function. */
+    onProgress(listener: (p: SyncProgress) => void): () => void;
+    /** The newest progress event of the run in progress (or the last one), null when none was pushed yet. */
+    current(): Promise<SyncProgress | null>;
   };
   update: {
     /** Current update state (no network). */

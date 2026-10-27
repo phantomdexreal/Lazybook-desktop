@@ -6,11 +6,12 @@ STATUS: IMPLEMENTED (Phase 35)
 */
 
 import { z } from 'zod';
-import { DESKTOP_DEFAULTS } from '../shared/constants';
+import { DESKTOP_DEFAULTS, VOUCHER_BATCH } from '../shared/constants';
 import type { SettingsPatch, SettingsResult, SettingsView } from '../shared/ipc';
 
 export const INTERVAL_LIMITS = { min: DESKTOP_DEFAULTS.syncIntervalMinAllowed, max: 1440 } as const;
 export const LOOKBACK_LIMITS = { min: 0, max: 3650 } as const;
+export const VOUCHER_BATCH_LIMITS = { min: VOUCHER_BATCH.sizeMin, max: VOUCHER_BATCH.sizeMax } as const;
 export const LANGUAGES: SettingsView['languages'] = [{ id: 'en', label: 'English' }];
 
 const HOST_RE = /^[A-Za-z0-9.-]+$/;
@@ -25,6 +26,8 @@ const PatchSchema = z
     autostart: z.boolean(),
     cloudCopy: z.boolean(),
     language: z.enum(['en']),
+    voucherBatchSize: z.number().int().min(VOUCHER_BATCH_LIMITS.min).max(VOUCHER_BATCH_LIMITS.max),
+    autoUpdateCheck: z.boolean(),
   })
   .partial()
   .strict();
@@ -37,6 +40,8 @@ const MESSAGES: Record<string, string> = {
   autostart: 'Choose on or off.',
   cloudCopy: 'Choose on or off.',
   language: 'Choose one of the listed languages.',
+  voucherBatchSize: `Enter a whole number of vouchers from ${VOUCHER_BATCH_LIMITS.min} to ${VOUCHER_BATCH_LIMITS.max}.`,
+  autoUpdateCheck: 'Choose on or off.',
 };
 
 export interface SettingsDeps {
@@ -47,6 +52,8 @@ export interface SettingsDeps {
     autostart: boolean;
     cloudCopy: boolean;
     language: 'en';
+    voucherBatchSize: number;
+    autoUpdateCheck: boolean;
   };
   updateConfig: (p: {
     lookbackDays?: number;
@@ -55,6 +62,8 @@ export interface SettingsDeps {
     autostart?: boolean;
     cloudCopy?: boolean;
     language?: 'en';
+    voucherBatchSize?: number;
+    autoUpdateCheck?: boolean;
   }) => void;
   /** the OS login item (the truth for autostart) */
   getAutostart: () => boolean;
@@ -67,6 +76,8 @@ export interface SettingsDeps {
   onTallyTargetChanged?: () => void;
   /** called after interval or lookback changed (the caller may nudge the scheduler) */
   onSyncSettingsChanged?: () => void;
+  /** called after the automatic update check switch changed (Phase 47: the updater starts or stops its timer) */
+  onAutoUpdateChanged?: (on: boolean) => void;
   log?: (msg: string, data: Record<string, unknown>) => void;
 }
 
@@ -96,7 +107,9 @@ export function createSettings(d: SettingsDeps): Settings {
       cloudCopyAllowed: d.cloudCopyAllowed(),
       language: c.language,
       languages: LANGUAGES,
-      limits: { intervalMin: { ...INTERVAL_LIMITS }, lookbackDays: { ...LOOKBACK_LIMITS } },
+      voucherBatchSize: c.voucherBatchSize,
+      autoUpdateCheck: c.autoUpdateCheck,
+      limits: { intervalMin: { ...INTERVAL_LIMITS }, lookbackDays: { ...LOOKBACK_LIMITS }, voucherBatchSize: { ...VOUCHER_BATCH_LIMITS } },
     };
   }
 
@@ -128,6 +141,8 @@ export function createSettings(d: SettingsDeps): Settings {
       if (p.autostart !== undefined) cfg.autostart = p.autostart;
       if (p.cloudCopy !== undefined) cfg.cloudCopy = p.cloudCopy;
       if (p.language !== undefined) cfg.language = p.language;
+      if (p.voucherBatchSize !== undefined) cfg.voucherBatchSize = p.voucherBatchSize;
+      if (p.autoUpdateCheck !== undefined) cfg.autoUpdateCheck = p.autoUpdateCheck;
 
       // OS login item first: if the OS refuses, nothing else has been written
       if (p.autostart !== undefined && p.autostart !== get().autostart) {
@@ -153,6 +168,7 @@ export function createSettings(d: SettingsDeps): Settings {
       const after = d.config();
       if (after.tally.host !== before.tally.host || after.tally.port !== before.tally.port) d.onTallyTargetChanged?.();
       if (after.intervalMin !== before.intervalMin || after.lookbackDays !== before.lookbackDays) d.onSyncSettingsChanged?.();
+      if (after.autoUpdateCheck !== before.autoUpdateCheck) d.onAutoUpdateChanged?.(after.autoUpdateCheck);
       d.log?.('settings changed', { keys: Object.keys(p) });
       return { ok: true, settings: get() };
     },
